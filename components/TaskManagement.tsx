@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Task, TaskPriority, TaskStatus } from '../types';
+import { Task, TaskPriority, TaskStatus, ChecklistItem } from '../types';
 import { generateTaskChecklist } from '../services/geminiService';
-import { Plus, Calendar, User, MoreVertical, Sparkles, X, Clock, Loader2, Percent } from 'lucide-react';
+import { Plus, Calendar, User, MoreVertical, Sparkles, X, Clock, Loader2, Percent, CheckSquare, Square } from 'lucide-react';
 
 const getPriorityColor = (priority: TaskPriority) => {
   switch (priority) {
@@ -15,9 +15,10 @@ interface TaskCardProps {
   task: Task;
   onMoveTask: (taskId: string, newStatus: TaskStatus) => void;
   onUpdateProgress: (taskId: string, newProgress: number) => void;
+  onToggleChecklist: (taskId: string, itemId: string) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onMoveTask, onUpdateProgress }) => (
+const TaskCard: React.FC<TaskCardProps> = ({ task, onMoveTask, onUpdateProgress, onToggleChecklist }) => (
   <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow group">
     <div className="flex justify-between items-start mb-2">
       <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${getPriorityColor(task.priority)}`}>
@@ -38,9 +39,33 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onMoveTask, onUpdateProgress 
     </div>
     
     <h4 className="font-semibold text-slate-800 mb-1">{task.title}</h4>
-    <p className="text-xs text-slate-500 mb-3 bg-slate-50 p-2 rounded whitespace-pre-line">
-      {task.description || "Sem descrição."}
-    </p>
+    
+    {task.description && (
+      <p className="text-xs text-slate-500 mb-3 bg-slate-50 p-2 rounded whitespace-pre-line">
+        {task.description}
+      </p>
+    )}
+
+    {/* Checklist Section */}
+    {task.checklist && task.checklist.length > 0 && (
+      <div className="mb-3 space-y-1">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Checklist IA</p>
+        {task.checklist.map(item => (
+          <div 
+            key={item.id} 
+            className="flex items-start gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded transition-colors group/item"
+            onClick={() => onToggleChecklist(task.id, item.id)}
+          >
+            <div className={`mt-0.5 ${item.completed ? 'text-green-500' : 'text-slate-300 group-hover/item:text-slate-400'}`}>
+              {item.completed ? <CheckSquare size={14} /> : <Square size={14} />}
+            </div>
+            <span className={`text-xs leading-tight ${item.completed ? 'text-slate-400 line-through' : 'text-slate-600'}`}>
+              {item.text}
+            </span>
+          </div>
+        ))}
+      </div>
+    )}
 
     {/* Progress Section */}
     <div className="mb-3">
@@ -56,15 +81,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onMoveTask, onUpdateProgress 
           style={{ width: `${task.progress}%` }}
         ></div>
       </div>
-      {/* Interactive slider hidden by default, shown on hover */}
-      <input 
-        type="range" 
-        min="0" 
-        max="100" 
-        value={task.progress}
-        onChange={(e) => onUpdateProgress(task.id, parseInt(e.target.value))}
-        className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
-      />
+      {/* Interactive slider hidden by default, shown on hover, only if no checklist (manual override) */}
+      {(!task.checklist || task.checklist.length === 0) && (
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          value={task.progress}
+          onChange={(e) => onUpdateProgress(task.id, parseInt(e.target.value))}
+          className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+        />
+      )}
     </div>
 
     <div className="flex items-center justify-between pt-2 border-t border-slate-100">
@@ -93,13 +120,18 @@ const TaskManagement: React.FC = () => {
     {
       id: '1',
       title: 'Instalar Quadro Elétrico',
-      description: '• Verificar esquema unifilar\n• Fixar caixa\n• Ligar disjuntores conforme projeto',
+      description: 'Verificar especificações técnicas antes de iniciar.',
+      checklist: [
+        { id: 'c1', text: 'Verificar esquema unifilar', completed: true },
+        { id: 'c2', text: 'Fixar caixa', completed: false },
+        { id: 'c3', text: 'Ligar disjuntores conforme projeto', completed: false }
+      ],
       project: 'Vila Nova',
       assignee: 'João Ferreira',
       status: 'TODO',
       priority: 'HIGH',
       dueDate: '2023-11-20',
-      progress: 0,
+      progress: 33,
       createdAt: '2023-11-01'
     },
     {
@@ -135,6 +167,7 @@ const TaskManagement: React.FC = () => {
   const [newTask, setNewTask] = useState<Partial<Task>>({
     title: '',
     description: '',
+    checklist: [],
     project: 'Vila Nova',
     assignee: 'Carlos Mendes',
     priority: 'MEDIUM',
@@ -143,11 +176,31 @@ const TaskManagement: React.FC = () => {
     progress: 0
   });
 
+  // Generates Checklist and populates the checklist array instead of just description
   const generateChecklist = async () => {
     if (!newTask.title) return;
     setLoadingAI(true);
-    const checklist = await generateTaskChecklist(newTask.title);
-    setNewTask(prev => ({ ...prev, description: checklist }));
+    
+    // Call API
+    const checklistText = await generateTaskChecklist(newTask.title);
+    
+    // Parse response: Split lines, remove bullets/numbers, filter empty
+    const items: ChecklistItem[] = checklistText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => ({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        text: line.replace(/^[\d\.\-\•\*]+\s*/, ''), // Remove bullet points or numbers
+        completed: false
+      }));
+
+    setNewTask(prev => ({ 
+      ...prev, 
+      checklist: items,
+      // If description is empty, maybe put a default message or leave it
+      description: prev.description || 'Tarefa gerada com assistência IA' 
+    }));
     setLoadingAI(false);
   };
 
@@ -157,6 +210,7 @@ const TaskManagement: React.FC = () => {
       id: Date.now().toString(),
       title: newTask.title!,
       description: newTask.description || '',
+      checklist: newTask.checklist || [],
       project: newTask.project!,
       assignee: newTask.assignee!,
       status: 'TODO',
@@ -170,6 +224,7 @@ const TaskManagement: React.FC = () => {
     setNewTask({
       title: '',
       description: '',
+      checklist: [],
       project: 'Vila Nova',
       assignee: 'Carlos Mendes',
       priority: 'MEDIUM',
@@ -184,13 +239,41 @@ const TaskManagement: React.FC = () => {
   };
 
   const updateProgress = (taskId: string, newProgress: number) => {
-    // Validate range 0-100
     const validProgress = Math.min(100, Math.max(0, newProgress));
     setTasks(tasks.map(t => t.id === taskId ? { ...t, progress: validProgress } : t));
   };
 
+  const toggleChecklistItem = (taskId: string, itemId: string) => {
+    setTasks(prevTasks => prevTasks.map(task => {
+      if (task.id !== taskId || !task.checklist) return task;
+
+      const updatedChecklist = task.checklist.map(item => 
+        item.id === itemId ? { ...item, completed: !item.completed } : item
+      );
+
+      // Auto-calculate progress
+      const completedCount = updatedChecklist.filter(i => i.completed).length;
+      const progress = Math.round((completedCount / updatedChecklist.length) * 100);
+
+      // Auto-update status based on progress (Optional, but nice UX)
+      let status = task.status;
+      if (progress === 100) status = 'DONE';
+      else if (progress > 0 && status === 'TODO') status = 'IN_PROGRESS';
+
+      return { ...task, checklist: updatedChecklist, progress, status };
+    }));
+  };
+
+  // Helper for modal checklist rendering
+  const removeNewTaskChecklistItem = (itemId: string) => {
+    setNewTask(prev => ({
+      ...prev,
+      checklist: prev.checklist?.filter(i => i.id !== itemId)
+    }));
+  };
+
   return (
-    <div className="space-y-6 h-[calc(100vh-140px)] flex flex-col">
+    <div className="space-y-6 h-[calc(100vh-140px)] flex flex-col animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Tarefas de Equipa</h1>
@@ -216,7 +299,7 @@ const TaskManagement: React.FC = () => {
             </h3>
             <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
               {tasks.filter(t => t.status === 'TODO').map(task => (
-                <TaskCard key={task.id} task={task} onMoveTask={moveTask} onUpdateProgress={updateProgress} />
+                <TaskCard key={task.id} task={task} onMoveTask={moveTask} onUpdateProgress={updateProgress} onToggleChecklist={toggleChecklistItem} />
               ))}
             </div>
           </div>
@@ -229,7 +312,7 @@ const TaskManagement: React.FC = () => {
             </h3>
             <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
               {tasks.filter(t => t.status === 'IN_PROGRESS').map(task => (
-                <TaskCard key={task.id} task={task} onMoveTask={moveTask} onUpdateProgress={updateProgress} />
+                <TaskCard key={task.id} task={task} onMoveTask={moveTask} onUpdateProgress={updateProgress} onToggleChecklist={toggleChecklistItem} />
               ))}
             </div>
           </div>
@@ -242,7 +325,7 @@ const TaskManagement: React.FC = () => {
             </h3>
             <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
               {tasks.filter(t => t.status === 'DONE').map(task => (
-                <TaskCard key={task.id} task={task} onMoveTask={moveTask} onUpdateProgress={updateProgress} />
+                <TaskCard key={task.id} task={task} onMoveTask={moveTask} onUpdateProgress={updateProgress} onToggleChecklist={toggleChecklistItem} />
               ))}
             </div>
           </div>
@@ -252,15 +335,15 @@ const TaskManagement: React.FC = () => {
       {/* Add Task Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 flex-shrink-0">
               <h3 className="font-bold text-lg text-slate-800">Nova Tarefa</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X size={20} />
               </button>
             </div>
             
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Título da Tarefa</label>
                 <input 
@@ -273,23 +356,45 @@ const TaskManagement: React.FC = () => {
               </div>
 
               <div>
-                <div className="flex justify-between items-center mb-1">
-                   <label className="block text-sm font-medium text-slate-700">Descrição / Checklist</label>
-                   <button 
-                     onClick={generateChecklist}
-                     disabled={!newTask.title || loadingAI}
-                     className="text-xs flex items-center gap-1 text-secondary-600 hover:text-secondary-700 font-medium disabled:opacity-50"
-                   >
-                     {loadingAI ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                     Gerar com IA
-                   </button>
-                </div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Descrição</label>
                 <textarea 
-                  className="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary-500 h-24 resize-none text-sm"
-                  placeholder="Detalhes da tarefa..."
+                  className="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary-500 h-20 resize-none text-sm"
+                  placeholder="Detalhes adicionais..."
                   value={newTask.description}
                   onChange={(e) => setNewTask({...newTask, description: e.target.value})}
                 />
+              </div>
+
+              {/* AI Checklist Section */}
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="flex justify-between items-center mb-2">
+                   <label className="block text-sm font-bold text-slate-700 flex items-center gap-1">
+                     <Sparkles size={14} className="text-secondary-500" /> Checklist IA
+                   </label>
+                   <button 
+                     onClick={generateChecklist}
+                     disabled={!newTask.title || loadingAI}
+                     className="text-xs bg-white border border-slate-300 px-2 py-1 rounded hover:bg-slate-100 font-medium disabled:opacity-50 text-slate-600 flex items-center gap-1"
+                   >
+                     {loadingAI ? <Loader2 size={10} className="animate-spin" /> : 'Gerar Passos'}
+                   </button>
+                </div>
+                
+                {newTask.checklist && newTask.checklist.length > 0 ? (
+                  <div className="space-y-1">
+                    {newTask.checklist.map((item) => (
+                      <div key={item.id} className="flex items-start gap-2 bg-white p-2 rounded border border-slate-200 text-xs">
+                        <Square size={14} className="text-slate-300 mt-0.5" />
+                        <span className="flex-1 text-slate-700">{item.text}</span>
+                        <button onClick={() => removeNewTaskChecklistItem(item.id)} className="text-slate-300 hover:text-red-500"><X size={12} /></button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 italic text-center py-2">
+                    Clique em "Gerar Passos" para criar uma checklist automática baseada no título.
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -333,25 +438,6 @@ const TaskManagement: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                   <label className="block text-sm font-medium text-slate-700 mb-1">Progresso (%)</label>
-                   <div className="relative">
-                      <input 
-                        type="number"
-                        min="0"
-                        max="100"
-                        className="w-full border border-slate-300 rounded-lg p-2.5 pl-9 outline-none text-sm"
-                        value={newTask.progress}
-                        onChange={(e) => {
-                          const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                          setNewTask({...newTask, progress: val});
-                        }}
-                      />
-                      <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                   </div>
-                </div>
-              </div>
-              
-              <div>
                    <label className="block text-sm font-medium text-slate-700 mb-1">Prazo</label>
                    <input 
                     type="date"
@@ -359,6 +445,7 @@ const TaskManagement: React.FC = () => {
                     value={newTask.dueDate}
                     onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
                   />
+                </div>
               </div>
 
               <button 

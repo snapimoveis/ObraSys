@@ -428,10 +428,17 @@ export interface Invoice {
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
   description?: string;
+  checklist?: ChecklistItem[];
   project: string;
   assignee: string;
   status: TaskStatus;
