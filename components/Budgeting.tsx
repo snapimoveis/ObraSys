@@ -1,45 +1,90 @@
 import React, { useState } from 'react';
-import { Plus, Download, UserPlus, User, X, Calendar } from 'lucide-react';
+import { Plus, UserPlus, FolderOpen, MoreVertical } from 'lucide-react';
+import BudgetEditor from './budget/BudgetEditor'; // Updated Import
+import { Budget } from '../types';
 
 const Budgeting: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'ORCAMENTOS' | 'CLIENTES' | 'BASE_PRECOS'>('CLIENTES');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'ORCAMENTOS' | 'CLIENTES' | 'BASE_PRECOS'>('ORCAMENTOS');
+  const [viewMode, setViewMode] = useState<'LIST' | 'EDITOR'>('LIST');
+  const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
 
-  // Modal State
-  const [modalData, setModalData] = useState({
-    title: '',
-    client: '',
-    description: '',
-    validity: ''
-  });
+  // Mock List
+  const [budgets, setBudgets] = useState<any[]>([
+    { id: '1', title: 'Orçamento Base', project: 'Reabilitação Vila Nova', client: 'João Silva', date: '2023-11-10', total: 120450, status: 'DRAFT', version: 1 },
+    { id: '2', title: 'Revisão Cliente', project: 'Reabilitação Vila Nova', client: 'João Silva', date: '2023-11-15', total: 128300, status: 'REVIEW', version: 2 },
+    { id: '3', title: 'Orçamento Inicial', project: 'Escritórios TechHub', client: 'TechCorp SA', date: '2023-10-25', total: 245000, status: 'APPROVED', version: 1 },
+  ]);
+
+  const handleOpenBudget = (budget?: any) => {
+    // If it's a new budget, create a skeleton
+    const budgetToOpen = budget || null;
+    setSelectedBudget(budgetToOpen);
+    setViewMode('EDITOR');
+  };
+
+  const handleSaveBudget = (savedBudget: Budget) => {
+    // Mock Update logic
+    const exists = budgets.find(b => b.id === savedBudget.id);
+    if (!exists) {
+        setBudgets(prev => [{
+            id: savedBudget.id,
+            title: savedBudget.title,
+            project: savedBudget.projectLocation || 'Novo Projeto',
+            client: savedBudget.client,
+            date: new Date().toISOString(),
+            total: savedBudget.totalPrice,
+            status: savedBudget.status,
+            version: savedBudget.version
+        }, ...prev]);
+    }
+    setViewMode('LIST');
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+        case 'DRAFT': return <span className="px-2 py-1 rounded bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200 uppercase tracking-wide">Rascunho</span>;
+        case 'APPROVED': return <span className="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px] font-bold border border-green-200 uppercase tracking-wide">Aprovado</span>;
+        case 'REVIEW': return <span className="px-2 py-1 rounded bg-orange-100 text-orange-700 text-[10px] font-bold border border-orange-200 uppercase tracking-wide">Em Revisão</span>;
+        default: return <span className="px-2 py-1 rounded bg-slate-100 text-slate-500 text-[10px] font-bold border border-slate-200">{status}</span>;
+    }
+  };
+
+  if (viewMode === 'EDITOR') {
+      return (
+          <BudgetEditor 
+            budget={selectedBudget} 
+            onSave={handleSaveBudget} 
+            onBack={() => setViewMode('LIST')} 
+          />
+      );
+  }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in h-full flex flex-col">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-slate-800">Orçamentação</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0">
+        <div>
+           <h1 className="text-2xl font-bold text-slate-800">Orçamentação</h1>
+           <p className="text-slate-500 text-sm">Gestão profissional de custos e propostas</p>
+        </div>
         <div className="flex gap-2">
            <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => handleOpenBudget()}
             className="bg-[#00609C] hover:bg-[#005082] text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm text-sm font-medium transition-colors"
            >
               <Plus size={16} />
-              <span>Novo Orçamento</span>
-           </button>
-           <button className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm text-sm font-medium transition-colors">
-              <UserPlus size={16} />
-              <span>Cadastrar Cliente</span>
+              <span>Criar Orçamento</span>
            </button>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-slate-100 p-1 rounded-lg inline-flex w-full md:w-auto">
+      <div className="bg-slate-100 p-1 rounded-lg inline-flex w-full md:w-auto flex-shrink-0 border border-slate-200">
         <button 
           onClick={() => setActiveTab('ORCAMENTOS')}
           className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'ORCAMENTOS' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
-          Orçamentos
+          Orçamentos do Projeto
         </button>
         <button 
           onClick={() => setActiveTab('CLIENTES')}
@@ -51,123 +96,95 @@ const Budgeting: React.FC = () => {
           onClick={() => setActiveTab('BASE_PRECOS')}
           className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'BASE_PRECOS' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
-          Base de Preços
+          Base de Artigos
         </button>
       </div>
 
       {/* Content Area */}
-      {activeTab === 'CLIENTES' && (
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-             <div>
-               <h2 className="text-xl font-bold text-slate-800">Gestão de Clientes</h2>
-               <p className="text-slate-500 text-sm">0 clientes registrados</p>
-             </div>
-             <div className="flex gap-2">
-               <button className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm text-sm font-medium transition-colors">
-                  <Download size={16} />
-                  <span>Exportar</span>
-               </button>
-               <button className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm text-sm font-medium transition-colors">
-                  <UserPlus size={16} />
-                  <span>Novo Cliente</span>
-               </button>
-             </div>
-          </div>
+      {activeTab === 'ORCAMENTOS' && (
+        <div className="space-y-6 flex-1 overflow-hidden flex flex-col">
+            
+            {/* Project Section Example 1 */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-shrink-0">
+                 <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white border border-slate-200 rounded-lg text-[#00609C]">
+                            <FolderOpen size={20} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-800">Reabilitação Vila Nova</h3>
+                            <p className="text-xs text-slate-500">Cliente: João Silva</p>
+                        </div>
+                    </div>
+                    <button onClick={() => handleOpenBudget()} className="text-xs font-medium text-[#00609C] hover:underline flex items-center gap-1">
+                        <Plus size={14} /> Novo Orçamento
+                    </button>
+                 </div>
+                 
+                 <table className="w-full text-left border-collapse">
+                    <thead className="bg-white border-b border-slate-100 text-xs font-bold text-slate-400 uppercase">
+                        <tr>
+                            <th className="px-6 py-3">Nome do Orçamento</th>
+                            <th className="px-6 py-3 w-24 text-center">Versão</th>
+                            <th className="px-6 py-3 w-32">Estado</th>
+                            <th className="px-6 py-3 text-right">Total (€)</th>
+                            <th className="px-6 py-3 w-32 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                        {budgets.filter(b => b.project === 'Reabilitação Vila Nova').map((budget) => (
+                            <tr key={budget.id} className="hover:bg-blue-50/50 transition-colors group">
+                                <td className="px-6 py-4">
+                                    <div className="font-bold text-sm text-slate-700">{budget.title}</div>
+                                    <div className="text-xs text-slate-400">{new Date(budget.date).toLocaleDateString('pt-PT')}</div>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-600">v{budget.version}</span>
+                                </td>
+                                <td className="px-6 py-4">
+                                    {getStatusBadge(budget.status)}
+                                </td>
+                                <td className="px-6 py-4 text-right font-bold text-slate-800 text-sm">
+                                    {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(budget.total)}
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button 
+                                          onClick={() => handleOpenBudget(budget)}
+                                          className="text-xs bg-[#00609C] text-white px-3 py-1.5 rounded hover:bg-[#005082] font-medium"
+                                        >
+                                            Abrir
+                                        </button>
+                                        <button className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded">
+                                            <MoreVertical size={16} />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                 </table>
+            </div>
+        </div>
+      )}
 
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm min-h-[400px] flex flex-col items-center justify-center p-8 text-center">
+      {activeTab === 'CLIENTES' && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm min-h-[400px] flex flex-col items-center justify-center p-8 text-center">
              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-400">
                <UserPlus size={32} />
              </div>
              <h3 className="text-lg font-medium text-slate-800 mb-1">Nenhum cliente encontrado</h3>
-             <p className="text-slate-500 text-sm">Comece criando seu primeiro cliente.</p>
-          </div>
+             <p className="text-slate-500 text-sm mb-6">Comece criando seu primeiro cliente.</p>
+             <button className="bg-[#00609C] hover:bg-[#005082] text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm text-sm font-medium transition-colors">
+                <UserPlus size={16} />
+                <span>Criar Cliente</span>
+             </button>
         </div>
       )}
 
-      {activeTab !== 'CLIENTES' && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm min-h-[400px] flex flex-col items-center justify-center p-8 text-center text-slate-400">
-          <p>Conteúdo da aba {activeTab === 'ORCAMENTOS' ? 'Orçamentos' : 'Base de Preços'} em breve.</p>
-        </div>
-      )}
-
-      {/* New Budget Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-              <h3 className="font-bold text-lg text-slate-800">Criar Novo Orçamento</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Título do Orçamento *</label>
-                <input 
-                  type="text" 
-                  className="w-full border border-primary-500 rounded-lg p-2.5 outline-none ring-1 ring-primary-500 text-sm"
-                  placeholder="Ex: Renovação de Apartamento"
-                  value={modalData.title}
-                  onChange={(e) => setModalData({...modalData, title: e.target.value})}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Cliente *</label>
-                <select 
-                  className="w-full border border-slate-300 rounded-lg p-2.5 outline-none bg-white text-sm text-slate-500"
-                  value={modalData.client}
-                  onChange={(e) => setModalData({...modalData, client: e.target.value})}
-                >
-                  <option value="">Selecione um cliente</option>
-                </select>
-                <p className="text-xs text-slate-500 mt-1.5">
-                  Nenhum cliente disponível. <a href="#" className="text-[#00609C] hover:underline underline-offset-2">Criar cliente primeiro</a>
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Descrição</label>
-                <textarea 
-                  className="w-full border border-slate-300 rounded-lg p-2.5 outline-none text-sm h-24 resize-none"
-                  placeholder="Descrição do projeto..."
-                  value={modalData.description}
-                  onChange={(e) => setModalData({...modalData, description: e.target.value})}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Data de Validade (opcional)</label>
-                <div className="relative">
-                  <input 
-                    type="text"
-                    placeholder="dd/mm/aaaa"
-                    className="w-full border border-slate-300 rounded-lg p-2.5 outline-none text-sm"
-                    value={modalData.validity}
-                    onChange={(e) => setModalData({...modalData, validity: e.target.value})}
-                  />
-                  <Calendar size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button 
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-white border border-slate-200 text-slate-700 font-medium py-2.5 rounded-lg hover:bg-slate-50 transition-colors text-sm"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  className="flex-1 bg-primary-400 text-white font-medium py-2.5 rounded-lg cursor-not-allowed text-sm"
-                  disabled
-                >
-                  Criar Orçamento
-                </button>
-              </div>
-            </div>
-          </div>
+      {activeTab === 'BASE_PRECOS' && (
+         <div className="bg-white rounded-xl border border-slate-200 shadow-sm min-h-[400px] flex flex-col items-center justify-center p-8 text-center text-slate-400">
+          <p>Base de preços compartilhada.</p>
         </div>
       )}
     </div>
