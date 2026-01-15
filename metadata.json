@@ -1,0 +1,7 @@
+{
+  "name": "Obra Sys",
+  "description": "Plataforma integrada de gestão de obras para o mercado português.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
