@@ -23,7 +23,7 @@ const KPICard = ({ title, value, subValue, subLabel, icon: Icon, type = 'neutral
   };
 
   return (
-    <div className={`p-4 rounded-xl border shadow-sm flex flex-col justify-between ${colors[type]}`}>
+    <div className={`p-4 rounded-lg border shadow-sm flex flex-col justify-between ${colors[type]}`}>
       <div className="flex justify-between items-start">
         <span className="text-xs font-bold uppercase opacity-70 tracking-wide">{title}</span>
         <Icon size={18} className={iconColors[type]} />

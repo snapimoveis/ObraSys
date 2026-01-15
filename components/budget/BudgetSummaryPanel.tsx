@@ -22,7 +22,7 @@ const BudgetSummaryPanel: React.FC<BudgetSummaryPanelProps> = ({ budget, onSave 
     <div className="w-80 flex-shrink-0 flex flex-col gap-4">
       
       {/* Main Financial Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
         <div className="bg-slate-800 p-4 text-white">
           <h3 className="font-bold text-sm uppercase tracking-wide opacity-80 mb-1">Total Orçamento</h3>
           <div className="text-3xl font-bold">{formatCurrency(budget.totalPrice)}</div>
@@ -46,7 +46,7 @@ const BudgetSummaryPanel: React.FC<BudgetSummaryPanelProps> = ({ budget, onSave 
             </div>
           </div>
 
-          <div className={`p-3 rounded-lg flex items-center gap-3 ${risk.bg} border ${risk.border}`}>
+          <div className={`p-3 rounded-md flex items-center gap-3 ${risk.bg} border ${risk.border}`}>
             <AlertTriangle size={20} className={risk.color} />
             <div>
               <p className={`text-xs font-bold uppercase ${risk.color}`}>Risco Financeiro</p>
@@ -57,7 +57,7 @@ const BudgetSummaryPanel: React.FC<BudgetSummaryPanelProps> = ({ budget, onSave 
       </div>
 
       {/* KPIs & Stats */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
         <h4 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
           <Calculator size={16} className="text-[#00609C]" /> Indicadores (KPIs)
         </h4>
@@ -78,7 +78,7 @@ const BudgetSummaryPanel: React.FC<BudgetSummaryPanelProps> = ({ budget, onSave 
       </div>
 
       {/* Actions */}
-      <div className="bg-slate-100 rounded-xl p-4 border border-slate-200">
+      <div className="bg-slate-100 rounded-lg p-4 border border-slate-200">
         <p className="text-xs font-bold text-slate-500 uppercase mb-3">Ações Rápidas</p>
         <div className="space-y-2">
           <button className="w-full bg-white border border-slate-300 hover:border-[#00609C] text-slate-600 hover:text-[#00609C] py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2">

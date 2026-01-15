@@ -53,7 +53,7 @@ const DashboardOverview: React.FC = () => {
           <DashboardProjects projects={projects} />
           
           {/* Quick Actions Bar */}
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+          <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
              <h3 className="font-bold text-slate-800 mb-4 text-sm uppercase tracking-wide">Acesso Rápido</h3>
              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <button className="flex flex-col items-center justify-center p-4 rounded-lg border border-slate-100 bg-slate-50 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all group">
@@ -89,7 +89,7 @@ const DashboardOverview: React.FC = () => {
            <DashboardAlerts alerts={alerts} />
            
            {/* Mini Financial Summary */}
-           <div className="bg-[#00609C] rounded-xl shadow-md p-6 text-white relative overflow-hidden">
+           <div className="bg-[#00609C] rounded-lg shadow-md p-6 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10">
                  <Calculator size={100} />
               </div>

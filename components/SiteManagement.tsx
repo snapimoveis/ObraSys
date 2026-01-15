@@ -100,28 +100,28 @@ const SiteManagement: React.FC = () => {
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
            <div>
               <p className="text-xs font-medium text-slate-500 uppercase">Obras Ativas</p>
               <h3 className="text-2xl font-bold text-slate-800">{works.filter(w => w.status === 'EXECUTION').length}</h3>
            </div>
            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><HardHat size={20}/></div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
            <div>
               <p className="text-xs font-medium text-slate-500 uppercase">Concluídas</p>
               <h3 className="text-2xl font-bold text-slate-800">{works.filter(w => w.status === 'COMPLETED').length}</h3>
            </div>
            <div className="p-2 bg-green-50 text-green-600 rounded-lg"><CheckCircle2 size={20}/></div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
            <div>
               <p className="text-xs font-medium text-slate-500 uppercase">Em Atraso</p>
               <h3 className="text-2xl font-bold text-slate-800">0</h3>
            </div>
            <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><AlertTriangle size={20}/></div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
            <div>
               <p className="text-xs font-medium text-slate-500 uppercase">Volume em Execução</p>
               <h3 className="text-2xl font-bold text-slate-800">
@@ -135,7 +135,7 @@ const SiteManagement: React.FC = () => {
       </div>
 
       {/* Works List */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
           <h2 className="text-lg font-semibold text-slate-800">Lista de Obras</h2>
           <button className="text-sm text-[#00609C] font-medium hover:underline">Ver todas</button>

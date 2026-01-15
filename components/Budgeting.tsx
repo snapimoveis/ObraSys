@@ -105,7 +105,7 @@ const Budgeting: React.FC = () => {
         <div className="space-y-6 flex-1 overflow-hidden flex flex-col">
             
             {/* Project Section Example 1 */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-shrink-0">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex-shrink-0">
                  <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-white border border-slate-200 rounded-lg text-[#00609C]">
@@ -169,7 +169,7 @@ const Budgeting: React.FC = () => {
       )}
 
       {activeTab === 'CLIENTES' && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm min-h-[400px] flex flex-col items-center justify-center p-8 text-center">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm min-h-[400px] flex flex-col items-center justify-center p-8 text-center">
              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-400">
                <UserPlus size={32} />
              </div>
@@ -183,7 +183,7 @@ const Budgeting: React.FC = () => {
       )}
 
       {activeTab === 'BASE_PRECOS' && (
-         <div className="bg-white rounded-xl border border-slate-200 shadow-sm min-h-[400px] flex flex-col items-center justify-center p-8 text-center text-slate-400">
+         <div className="bg-white rounded-lg border border-slate-200 shadow-sm min-h-[400px] flex flex-col items-center justify-center p-8 text-center text-slate-400">
           <p>Base de preços compartilhada.</p>
         </div>
       )}

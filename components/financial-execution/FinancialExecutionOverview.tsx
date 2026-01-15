@@ -24,7 +24,7 @@ const FinancialExecutionOverview: React.FC<Props> = ({ budget, work }) => {
 
   if (error || !data) {
     return (
-      <div className="bg-red-50 p-6 rounded-xl flex flex-col items-center text-center">
+      <div className="bg-red-50 p-6 rounded-lg flex flex-col items-center text-center">
         <AlertCircle size={32} className="text-red-500 mb-2" />
         <h3 className="text-red-800 font-bold">Erro de Processamento</h3>
         <p className="text-red-600 text-sm">{error || "Não foi possível carregar os dados financeiros."}</p>
@@ -36,7 +36,7 @@ const FinancialExecutionOverview: React.FC<Props> = ({ budget, work }) => {
     <div className="animate-fade-in space-y-6">
       <FinancialKPIs data={data} />
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
            <h3 className="font-bold text-slate-800">Detalhe por Capítulo</h3>
            <div className="flex gap-4 text-xs">

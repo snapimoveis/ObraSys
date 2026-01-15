@@ -31,7 +31,7 @@ const DashboardAlerts: React.FC<Props> = ({ alerts }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+    <div className="bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col h-full">
       <div className="p-4 border-b border-slate-100 flex justify-between items-center">
         <h3 className="font-bold text-slate-800 flex items-center gap-2">
           <AlertCircle size={20} className="text-slate-400" />
@@ -50,7 +50,7 @@ const DashboardAlerts: React.FC<Props> = ({ alerts }) => {
           </div>
         ) : (
           alerts.map(alert => (
-            <div key={alert.id} className={`p-3 rounded-lg border flex items-start gap-3 transition-colors hover:shadow-sm ${getBgColor(alert.type)}`}>
+            <div key={alert.id} className={`p-3 rounded-md border flex items-start gap-3 transition-colors hover:shadow-sm ${getBgColor(alert.type)}`}>
               <div className="mt-0.5 flex-shrink-0">
                 {getIcon(alert.type)}
               </div>

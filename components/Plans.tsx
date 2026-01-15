@@ -69,10 +69,10 @@ const Plans: React.FC = () => {
       </div>
 
       {/* Plan Toggle / Status Bar */}
-      <div className="bg-white rounded-xl p-1.5 border border-slate-200 flex justify-between items-center max-w-4xl mx-auto shadow-sm">
+      <div className="bg-white rounded-lg p-1.5 border border-slate-200 flex justify-between items-center max-w-4xl mx-auto shadow-sm">
         <div className="flex-1 text-center py-2 text-sm font-medium text-slate-400">Plano Atual (Trial)</div>
         <div className="w-px h-6 bg-slate-200"></div>
-        <div className="flex-1 text-center py-2 text-sm font-bold text-[#00609C] bg-blue-50 rounded-lg shadow-sm">Planos Disponíveis</div>
+        <div className="flex-1 text-center py-2 text-sm font-bold text-[#00609C] bg-blue-50 rounded-md shadow-sm">Planos Disponíveis</div>
       </div>
 
       <div className="text-center mt-8 mb-4">
@@ -86,7 +86,7 @@ const Plans: React.FC = () => {
           <div 
             key={plan.id}
             className={`
-              relative bg-white rounded-2xl flex flex-col h-full transition-all duration-300
+              relative bg-white rounded-lg flex flex-col h-full transition-all duration-300
               ${plan.popular 
                 ? 'border-2 border-[#00609C] shadow-lg scale-100 md:scale-105 z-10' 
                 : 'border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200'}
@@ -126,7 +126,7 @@ const Plans: React.FC = () => {
             <div className="p-8 pt-0 mt-auto">
               <button 
                 className={`
-                  w-full py-3 rounded-xl font-bold text-sm transition-all duration-200
+                  w-full py-3 rounded-lg font-bold text-sm transition-all duration-200
                   ${plan.popular 
                     ? 'bg-[#00609C] hover:bg-[#005082] text-white shadow-md hover:shadow-lg' 
                     : 'bg-white border border-slate-200 text-slate-600 hover:border-[#00609C] hover:text-[#00609C]'}
@@ -141,7 +141,7 @@ const Plans: React.FC = () => {
 
       {/* Enterprise Contact Section */}
       <div className="max-w-4xl mx-auto mt-12">
-        <div className="bg-white border border-slate-200 rounded-xl p-8 text-center relative overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-lg p-8 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 p-10 opacity-5">
             <Building2 size={120} />
           </div>

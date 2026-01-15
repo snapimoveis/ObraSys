@@ -21,14 +21,14 @@ const ArticleModal = ({ isOpen, onClose, onSave, initialData }: any) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 animate-fade-in">
-       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+       <div className="bg-white rounded-lg shadow-2xl w-full max-w-md p-6">
           <div className="flex justify-between items-center mb-4">
              <h3 className="font-bold text-lg text-slate-800">{initialData ? 'Editar' : 'Novo'} Artigo</h3>
              <button onClick={onClose}><X size={20} className="text-slate-400" /></button>
           </div>
           <div className="space-y-3">
              <input 
-               className="w-full border rounded p-2 text-sm" 
+               className="w-full border rounded-md p-2 text-sm" 
                placeholder="Descrição"
                value={formData.description}
                onChange={e => setFormData({...formData, description: e.target.value})}
@@ -36,14 +36,14 @@ const ArticleModal = ({ isOpen, onClose, onSave, initialData }: any) => {
              <div className="grid grid-cols-2 gap-3">
                 <input 
                   type="number" 
-                  className="border rounded p-2 text-sm" 
+                  className="border rounded-md p-2 text-sm" 
                   placeholder="Quantidade" 
                   value={formData.quantity}
                   onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value)})}
                 />
                  <input 
                   type="number" 
-                  className="border rounded p-2 text-sm" 
+                  className="border rounded-md p-2 text-sm" 
                   placeholder="Custo Unit." 
                   value={formData.unitCost}
                   onChange={e => setFormData({...formData, unitCost: parseFloat(e.target.value)})}
@@ -54,7 +54,7 @@ const ArticleModal = ({ isOpen, onClose, onSave, initialData }: any) => {
                    onSave(formData);
                    onClose();
                 }}
-                className="w-full bg-[#00609C] text-white py-2 rounded font-bold mt-4"
+                className="w-full bg-[#00609C] text-white py-2 rounded-lg font-bold mt-4"
              >
                 Guardar
              </button>
@@ -172,7 +172,7 @@ const BudgetEditor: React.FC<BudgetEditorProps> = ({ budget: initialBudget, onSa
     <div className="flex h-full bg-slate-50 overflow-hidden animate-fade-in gap-4 relative">
       
       {/* LEFT CONTENT */}
-      <div className="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
         {/* Header */}
         <div className="border-b border-slate-200 p-4 bg-white flex justify-between items-center sticky top-0 z-20 shadow-sm">
            <div className="flex items-center gap-3">

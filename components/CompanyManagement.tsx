@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Upload } from 'lucide-react';
+import { Building2, Upload, User, MapPin, Phone, Mail, Globe, FileText } from 'lucide-react';
 
 const CompanyManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'PROFILE' | 'COMPANY'>('PROFILE');
@@ -8,23 +8,25 @@ const CompanyManagement: React.FC = () => {
     <div className="space-y-6 animate-fade-in pb-12">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-           <Building2 size={24} className="text-[#00609C]" />
-           <h1 className="text-2xl font-bold text-slate-800">Gestão da Empresa</h1>
+           <div className="p-2 bg-white border border-slate-200 rounded-lg shadow-sm">
+             <Building2 size={20} className="text-[#00609C]" />
+           </div>
+           <h1 className="text-2xl font-bold text-gray-900">Gestão da Empresa</h1>
         </div>
-        <p className="text-slate-500 text-sm">Gerir informações pessoais e dados da empresa</p>
+        <p className="text-gray-500 text-sm ml-11">Gerir informações pessoais e dados da organização.</p>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white p-1 rounded-lg border border-slate-200 inline-flex w-full">
+      <div className="bg-white p-1 rounded-xl border border-gray-200 inline-flex w-full shadow-sm max-w-md">
         <button 
           onClick={() => setActiveTab('PROFILE')}
-          className={`flex-1 py-2 text-sm font-medium rounded transition-all ${activeTab === 'PROFILE' ? 'bg-slate-100 text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${activeTab === 'PROFILE' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
           Perfil Pessoal
         </button>
         <button 
           onClick={() => setActiveTab('COMPANY')}
-          className={`flex-1 py-2 text-sm font-medium rounded transition-all ${activeTab === 'COMPANY' ? 'bg-slate-100 text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${activeTab === 'COMPANY' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
           Dados da Empresa
         </button>
@@ -34,60 +36,92 @@ const CompanyManagement: React.FC = () => {
       {activeTab === 'PROFILE' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Sidebar Photo */}
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center h-fit">
-            <h3 className="text-lg font-medium text-slate-800 mb-2">Foto de Perfil</h3>
-            <p className="text-xs text-slate-500 mb-6 px-4">Carregue a sua foto ou logótipo da empresa</p>
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center h-fit">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Foto de Perfil</h3>
+            <p className="text-xs text-gray-500 mb-6 px-4">Esta imagem será visível para a sua equipa.</p>
             
-            <div className="w-32 h-32 rounded-full bg-slate-50 flex items-center justify-center mb-6 overflow-hidden">
-               {/* Placeholder for Logo */}
+            <div className="w-32 h-32 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center mb-6 overflow-hidden relative group">
                <div className="text-center">
-                 <span className="text-2xl font-bold text-[#00609C]">obra</span>
-                 <br />
-                 <span className="text-xs text-[#00609C]">sys</span>
+                 <span className="text-2xl font-bold text-[#00609C]">AS</span>
+               </div>
+               <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                 <Upload className="text-white" size={24} />
                </div>
             </div>
 
-            <button className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition-colors w-full justify-center">
+            <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors w-full justify-center shadow-sm">
               <Upload size={16} />
               Alterar Foto
             </button>
-            <p className="text-[10px] text-slate-400 mt-2">JPG, PNG ou GIF (máx. 2MB)</p>
+            <p className="text-[10px] text-gray-400 mt-3">JPG, PNG ou GIF (máx. 2MB)</p>
           </div>
 
           {/* Form */}
-          <div className="lg:col-span-2 bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
-             <div className="mb-6">
-               <h3 className="text-xl font-medium text-slate-800">Informações do Perfil</h3>
-               <p className="text-sm text-slate-500">Atualize as suas informações pessoais e de contacto</p>
+          <div className="lg:col-span-2 bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
+             <div className="mb-8 border-b border-gray-100 pb-4">
+               <h3 className="text-xl font-bold text-gray-900">Informações Pessoais</h3>
+               <p className="text-sm text-gray-500 mt-1">Atualize os seus dados de contacto e login.</p>
              </div>
              
-             <div className="space-y-5">
-               <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Nome Completo</label>
-                  <input type="text" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:border-[#00609C]" defaultValue="Antonio Cavalcanti" />
+             <div className="space-y-6">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome Completo</label>
+                    <div className="relative">
+                      <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input 
+                        type="text" 
+                        className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 pl-10 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all placeholder-gray-400 shadow-sm" 
+                        defaultValue="Antonio Cavalcanti" 
+                      />
+                    </div>
+                 </div>
+                 <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Telefone</label>
+                    <div className="relative">
+                      <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input 
+                        type="tel" 
+                        className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 pl-10 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all placeholder-gray-400 shadow-sm" 
+                        defaultValue="+351 912 345 678" 
+                      />
+                    </div>
+                 </div>
                </div>
 
                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
-                  <input type="email" className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm outline-none text-slate-500" defaultValue="snapimoveis@gmail.com" readOnly />
-                  <p className="text-xs text-slate-400 mt-1">O email não pode ser alterado. Contacte o suporte se necessário.</p>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+                  <div className="relative">
+                    <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input 
+                      type="email" 
+                      className="w-full bg-gray-50 text-gray-500 border border-gray-200 rounded-lg p-2.5 pl-10 text-sm outline-none cursor-not-allowed" 
+                      defaultValue="snapimoveis@gmail.com" 
+                      readOnly 
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span> O email de login não pode ser alterado diretamente.
+                  </p>
                </div>
 
                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Tipo de Utilizador</label>
-                  <input type="text" className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm outline-none text-slate-500" defaultValue="Administrador" readOnly />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Função / Cargo</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-gray-50 text-gray-500 border border-gray-200 rounded-lg p-2.5 text-sm outline-none cursor-not-allowed" 
+                    defaultValue="Administrador" 
+                    readOnly 
+                  />
                </div>
                
-               <div className="pt-4 border-t border-slate-100 mt-2">
-                 <p className="text-sm text-slate-500 flex items-center gap-2">
-                    <span className="w-4 h-4 flex items-center justify-center border border-slate-400 rounded text-[10px]">📅</span> 
-                    Conta criada em 18/07/2025
-                 </p>
-               </div>
-
-               <div className="flex justify-end gap-3 mt-6">
-                 <button className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 text-sm hover:bg-slate-50">Cancelar</button>
-                 <button className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700">Guardar Alterações</button>
+               <div className="flex justify-end gap-3 pt-6 mt-2 border-t border-gray-100">
+                 <button className="px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors">
+                   Cancelar
+                 </button>
+                 <button className="px-5 py-2.5 bg-[#00609C] text-white rounded-lg text-sm font-bold hover:bg-[#005082] transition-colors shadow-sm">
+                   Guardar Alterações
+                 </button>
                </div>
              </div>
           </div>
@@ -97,106 +131,151 @@ const CompanyManagement: React.FC = () => {
       {activeTab === 'COMPANY' && (
         <div className="space-y-6">
            {/* Identity */}
-           <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
-             <div className="mb-6 flex items-start gap-4">
-               <div className="pt-1"><Building2 size={20} className="text-slate-400" /></div>
+           <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
+             <div className="mb-8 flex items-start gap-4 border-b border-gray-100 pb-4">
+               <div className="p-2 bg-blue-50 text-[#00609C] rounded-lg">
+                 <Building2 size={24} />
+               </div>
                <div>
-                  <h3 className="text-lg font-medium text-slate-800">Identidade da Empresa</h3>
-                  <p className="text-sm text-slate-500">Configure o logótipo e informações básicas da empresa</p>
+                  <h3 className="text-lg font-bold text-gray-900">Identidade da Empresa</h3>
+                  <p className="text-sm text-gray-500">Configure como a sua empresa aparece nos documentos.</p>
                </div>
              </div>
              
-             <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex flex-col items-center gap-3">
-                   <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-xl font-bold">SI</div>
-                   <button className="text-xs flex items-center gap-1 px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">
-                     <Upload size={12} /> Alterar Logo
-                   </button>
+             <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex flex-col items-center gap-4">
+                   <div className="w-32 h-32 rounded-lg bg-gray-50 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-500 transition-all cursor-pointer">
+                      <Upload size={24} className="mb-2" />
+                      <span className="text-xs font-medium">Carregar Logo</span>
+                   </div>
                 </div>
-                <div className="flex-1 space-y-4">
-                   <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Nome da Empresa *</label>
-                      <input type="text" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:border-[#00609C]" defaultValue="Snap Imóveis" />
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome da Empresa *</label>
+                      <input 
+                        type="text" 
+                        className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all shadow-sm" 
+                        defaultValue="Snap Imóveis" 
+                      />
                    </div>
                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Atividade</label>
-                      <input type="text" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:border-[#00609C]" placeholder="Área de atividade da empresa" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Setor de Atividade</label>
+                      <input 
+                        type="text" 
+                        className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all shadow-sm" 
+                        placeholder="Ex: Construção Residencial" 
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Website</label>
+                      <div className="relative">
+                        <Globe size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input 
+                          type="url" 
+                          className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 pl-10 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all shadow-sm" 
+                          placeholder="https://..." 
+                        />
+                      </div>
                    </div>
                 </div>
              </div>
            </div>
 
            {/* Contacts */}
-           <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
-             <div className="mb-6">
-               <h3 className="text-lg font-medium text-slate-800">Informações de Contacto</h3>
-               <p className="text-sm text-slate-500">Contactos e endereço da empresa</p>
+           <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
+             <div className="mb-6 border-b border-gray-100 pb-4">
+               <h3 className="text-lg font-bold text-gray-900">Morada e Contactos</h3>
+               <p className="text-sm text-gray-500">Dados utilizados no cabeçalho de orçamentos e faturas.</p>
              </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
-                  <input type="email" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none" placeholder="email@empresa.com" />
-               </div>
-               <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Telefone</label>
-                  <input type="tel" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none" placeholder="+351 123 456 789" />
-               </div>
-               <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Website</label>
-                  <input type="url" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none" placeholder="https://www.empresa.com" />
-               </div>
-               <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Fax</label>
-                  <input type="tel" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none" placeholder="+351 123 456 788" />
-               </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Endereço</label>
-                  <textarea className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none h-20 resize-none" placeholder="Rua, número, andar"></textarea>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Endereço Principal</label>
+                  <div className="relative">
+                    <MapPin size={18} className="absolute left-3 top-3 text-gray-400" />
+                    <textarea 
+                      className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 pl-10 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all shadow-sm min-h-[80px] resize-none" 
+                      placeholder="Rua, número, andar"
+                    ></textarea>
+                  </div>
                </div>
                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Código Postal</label>
-                  <input type="text" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none" placeholder="0000-000" />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Código Postal</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all shadow-sm" 
+                    placeholder="0000-000" 
+                  />
                </div>
                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Cidade</label>
-                  <input type="text" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none" defaultValue="Lisboa" />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Cidade</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all shadow-sm" 
+                    defaultValue="Lisboa" 
+                  />
                </div>
-               <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">País</label>
-                  <input type="text" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none" defaultValue="Portugal" />
+               <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email Geral</label>
+                  <input 
+                    type="email" 
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all shadow-sm" 
+                    placeholder="geral@empresa.com" 
+                  />
+               </div>
+               <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Telefone Geral</label>
+                  <input 
+                    type="tel" 
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all shadow-sm" 
+                    placeholder="+351..." 
+                  />
                </div>
              </div>
            </div>
 
-           {/* Legal & Fiscal */}
-           <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
-             <div className="mb-6">
-               <h3 className="text-lg font-medium text-slate-800">Informações Legais e Fiscais</h3>
-               <p className="text-sm text-slate-500">Dados fiscais e legais da empresa</p>
+           {/* Legal */}
+           <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
+             <div className="mb-6 border-b border-gray-100 pb-4">
+               <h3 className="text-lg font-bold text-gray-900">Dados Fiscais</h3>
+               <p className="text-sm text-gray-500">Informação legal obrigatória.</p>
              </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">NIF</label>
-                  <input type="text" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none" placeholder="123456789" />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">NIF</label>
+                  <div className="relative">
+                    <FileText size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input 
+                      type="text" 
+                      className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 pl-10 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all shadow-sm" 
+                      placeholder="123456789" 
+                    />
+                  </div>
                </div>
                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Capital Social (€)</label>
-                  <input type="text" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none" placeholder="0.00" />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Capital Social (€)</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all shadow-sm" 
+                    placeholder="5000.00" 
+                  />
                </div>
                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Conservatória</label>
-                  <input type="text" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none" placeholder="Conservatória do Registo Comercial" />
-               </div>
-               <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Matrícula</label>
-                  <input type="text" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none" placeholder="Número da matrícula" />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Registo Comercial</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all shadow-sm" 
+                    placeholder="CRC Lisboa" 
+                  />
                </div>
              </div>
            </div>
 
-           <div className="flex justify-end">
-             <button className="px-6 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 shadow-sm">
-               Guardar Alterações
+           <div className="flex justify-end pt-4">
+             <button className="px-8 py-3 bg-[#00609C] text-white rounded-lg text-sm font-bold hover:bg-[#005082] transition-colors shadow-md flex items-center gap-2">
+               <Upload size={18} />
+               Guardar Todos os Dados
              </button>
            </div>
         </div>

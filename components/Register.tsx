@@ -80,7 +80,7 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans py-10">
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-2xl border border-slate-100">
+      <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-2xl border border-slate-100">
         <div className="flex justify-center mb-6">
           <Logo className="h-14 w-auto text-[#00609C]" />
         </div>
@@ -94,29 +94,29 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Nome e Apelido *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome e Apelido *</label>
               <input 
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="João Silva"
-                className={`w-full border rounded-md p-2.5 outline-none transition-all text-sm ${
-                  errors.name ? 'border-red-500 focus:ring-red-200' : 'border-slate-300 focus:ring-2 focus:ring-[#00609C] focus:border-transparent'
+                className={`w-full bg-white text-gray-900 border rounded-md p-2.5 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
+                  errors.name ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
                 }`}
               />
               {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">E-mail *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">E-mail *</label>
               <input 
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="snapimoveis@gmail.com"
-                className={`w-full border rounded-md p-2.5 outline-none transition-all text-sm ${
-                  errors.email ? 'border-red-500 focus:ring-red-200' : 'border-slate-300 focus:ring-2 focus:ring-[#00609C] focus:border-transparent bg-blue-50/50'
+                className={`w-full bg-white text-gray-900 border rounded-md p-2.5 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
+                  errors.email ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
                 }`}
               />
               {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
@@ -125,29 +125,29 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Telefone *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Telefone *</label>
               <input 
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="+351 912 345 678"
-                className={`w-full border rounded-md p-2.5 outline-none transition-all text-sm ${
-                  errors.phone ? 'border-red-500 focus:ring-red-200' : 'border-slate-300 focus:ring-2 focus:ring-[#00609C] focus:border-transparent'
+                className={`w-full bg-white text-gray-900 border rounded-md p-2.5 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
+                  errors.phone ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
                 }`}
               />
               {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Nome da Empresa *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome da Empresa *</label>
               <input 
                 type="text"
                 name="companyName"
                 value={formData.companyName}
                 onChange={handleChange}
                 placeholder="Construções Silva, Lda."
-                className={`w-full border rounded-md p-2.5 outline-none transition-all text-sm ${
-                  errors.companyName ? 'border-red-500 focus:ring-red-200' : 'border-slate-300 focus:ring-2 focus:ring-[#00609C] focus:border-transparent'
+                className={`w-full bg-white text-gray-900 border rounded-md p-2.5 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
+                  errors.companyName ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
                 }`}
               />
               {errors.companyName && <p className="text-xs text-red-500 mt-1">{errors.companyName}</p>}
@@ -155,12 +155,12 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de Cliente *</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tipo de Cliente *</label>
             <select 
               name="clientType"
               value={formData.clientType}
               onChange={handleChange}
-              className="w-full border border-slate-300 rounded-md p-2.5 outline-none focus:ring-2 focus:ring-[#00609C] focus:border-transparent transition-all text-sm bg-white text-slate-700"
+              className="w-full bg-white text-gray-900 border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all text-sm shadow-sm"
             >
               <option value="Empresa">Empresa</option>
               <option value="Particular">Particular</option>
@@ -169,20 +169,20 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">NIF (opcional)</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">NIF (opcional)</label>
             <input 
               type="text"
               name="nif"
               value={formData.nif}
               onChange={handleChange}
               placeholder="123456789"
-              className="w-full border border-slate-300 rounded-md p-2.5 outline-none focus:ring-2 focus:ring-[#00609C] focus:border-transparent transition-all text-sm"
+              className="w-full bg-white text-gray-900 border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all text-sm placeholder-gray-400 shadow-sm"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Palavra-passe *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Palavra-passe *</label>
               <div className="relative">
                 <input 
                   type={showPassword ? "text" : "password"}
@@ -190,14 +190,14 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="........"
-                  className={`w-full border rounded-md p-2.5 pr-10 outline-none transition-all text-sm bg-blue-50/50 ${
-                    errors.password ? 'border-red-500 focus:ring-red-200' : 'border-slate-300 focus:ring-2 focus:ring-[#00609C] focus:border-transparent'
+                  className={`w-full bg-white text-gray-900 border rounded-md p-2.5 pr-10 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
+                    errors.password ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
                   }`}
                 />
                 <button 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -205,7 +205,7 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
               {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Confirmar Palavra-passe *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Confirmar Palavra-passe *</label>
               <div className="relative">
                 <input 
                   type={showConfirmPassword ? "text" : "password"}
@@ -213,14 +213,14 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirme a senha"
-                  className={`w-full border rounded-md p-2.5 pr-10 outline-none transition-all text-sm ${
-                    errors.confirmPassword ? 'border-red-500 focus:ring-red-200' : 'border-slate-300 focus:ring-2 focus:ring-[#00609C] focus:border-transparent'
+                  className={`w-full bg-white text-gray-900 border rounded-md p-2.5 pr-10 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
+                    errors.confirmPassword ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
                   }`}
                 />
                 <button 
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -237,7 +237,7 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
                 id="terms"
                 checked={formData.terms}
                 onChange={handleChange}
-                className="mt-1 w-4 h-4 text-[#00609C] border-slate-300 rounded focus:ring-[#00609C]"
+                className="mt-1 w-4 h-4 text-[#00609C] border-gray-300 rounded focus:ring-[#00609C]"
               />
               <label htmlFor="terms" className="text-sm text-slate-600">
                 Aceito os <a href="#" className="text-[#00609C] hover:underline">Termos de Serviço</a> e a <a href="#" className="text-[#00609C] hover:underline">Política de Privacidade</a>

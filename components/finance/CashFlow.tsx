@@ -9,7 +9,7 @@ interface Props {
 
 const CashFlow: React.FC<Props> = ({ data }) => {
   return (
-    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-[350px]">
+    <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm h-[350px]">
       <h3 className="font-bold text-slate-800 mb-4">Fluxo de Caixa (6 Meses)</h3>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>

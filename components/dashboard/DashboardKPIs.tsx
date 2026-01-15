@@ -15,23 +15,23 @@ interface Props {
 }
 
 const KPICard = ({ label, value, subtext, icon: Icon, color, trend }: any) => (
-  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group">
     <div className="flex justify-between items-start">
       <div>
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{label}</p>
-        <h3 className="text-2xl font-bold text-slate-800 mt-1">{value}</h3>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+        <h3 className="text-3xl font-bold text-gray-900 group-hover:text-[#00609C] transition-colors">{value}</h3>
       </div>
-      <div className={`p-2 rounded-lg ${color.bg} ${color.text}`}>
-        <Icon size={20} />
+      <div className={`p-3 rounded-lg ${color.bg} ${color.text} transition-colors group-hover:scale-105`}>
+        <Icon size={22} />
       </div>
     </div>
-    <div className="mt-3 flex items-center gap-2">
+    <div className="mt-4 flex items-center gap-2 pt-4 border-t border-gray-50">
       {trend && (
-        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
           {trend === 'up' ? '↑' : '↓'}
         </span>
       )}
-      <p className="text-xs text-slate-400 font-medium truncate">
+      <p className="text-xs text-gray-400 font-medium truncate">
         {subtext}
       </p>
     </div>
@@ -40,7 +40,7 @@ const KPICard = ({ label, value, subtext, icon: Icon, color, trend }: any) => (
 
 const DashboardKPIs: React.FC<Props> = ({ metrics }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       <KPICard 
         label="Obras Ativas" 
         value={metrics.activeWorks} 

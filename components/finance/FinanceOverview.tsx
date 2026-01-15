@@ -42,7 +42,7 @@ const FinanceOverview: React.FC<Props> = ({ onSelectProject }) => {
       
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
            <div className="flex justify-between items-start">
               <div>
                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Saldo Atual</p>
@@ -55,7 +55,7 @@ const FinanceOverview: React.FC<Props> = ({ onSelectProject }) => {
            </p>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
            <div className="flex justify-between items-start">
               <div>
                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">A Receber</p>
@@ -66,7 +66,7 @@ const FinanceOverview: React.FC<Props> = ({ onSelectProject }) => {
            <p className="text-xs text-slate-400 mt-2">Próximos 30 dias</p>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
            <div className="flex justify-between items-start">
               <div>
                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">A Pagar</p>
@@ -77,7 +77,7 @@ const FinanceOverview: React.FC<Props> = ({ onSelectProject }) => {
            <p className="text-xs text-slate-400 mt-2">Próximos 30 dias</p>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
            <div className="flex justify-between items-start">
               <div>
                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Margem Média</p>
@@ -96,7 +96,7 @@ const FinanceOverview: React.FC<Props> = ({ onSelectProject }) => {
          </div>
 
          {/* Project Performance */}
-         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                <h3 className="font-bold text-slate-800 flex items-center gap-2">
                   <Building size={18} className="text-slate-500" />
@@ -105,7 +105,7 @@ const FinanceOverview: React.FC<Props> = ({ onSelectProject }) => {
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
                {projectResults.map(p => (
-                  <div key={p.id} className="p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group" onClick={() => onSelectProject(p.id)}>
+                  <div key={p.id} className="p-3 border border-slate-100 rounded-md hover:bg-slate-50 transition-colors cursor-pointer group" onClick={() => onSelectProject(p.id)}>
                      <div className="flex justify-between items-start mb-2">
                         <span className="font-bold text-slate-700 text-sm truncate max-w-[150px]" title={p.name}>{p.name}</span>
                         <div className={`text-xs font-bold px-1.5 py-0.5 rounded ${p.margin >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -126,7 +126,7 @@ const FinanceOverview: React.FC<Props> = ({ onSelectProject }) => {
       </div>
 
       {/* Recent Transactions */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
          <div className="p-5 border-b border-slate-100 flex justify-between items-center">
             <h3 className="font-bold text-slate-800 text-lg">Movimentos Recentes</h3>
             <button className="text-sm text-[#00609C] font-medium hover:underline flex items-center gap-1">
