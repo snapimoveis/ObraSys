@@ -1,73 +1,61 @@
-import { useState } from 'react';
-import { TeamMember, Role } from '../types';
+import { useState, useEffect } from 'react';
+import { TeamMember } from '../types';
+import { db, getCurrentCompanyId } from '../services/firebase';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc, QuerySnapshot } from 'firebase/firestore';
 
 export const useTeam = () => {
-  const [members, setMembers] = useState<TeamMember[]>([
-    {
-      id: '1',
-      name: 'Carlos Mendes',
-      email: 'carlos.mendes@obrasys.pt',
-      role: 'ADMIN',
-      status: 'ACTIVE',
-      assignedWorks: ['WORK-123'],
-      joinedAt: '2023-01-15',
-      lastActive: 'Há 5 minutos',
-      phone: '+351 912 345 678'
-    },
-    {
-      id: '2',
-      name: 'Ana Silva',
-      email: 'ana.silva@obrasys.pt',
-      role: 'ENGINEER',
-      status: 'ACTIVE',
-      assignedWorks: ['WORK-123'],
-      joinedAt: '2023-02-10',
-      lastActive: 'Há 2 horas',
-      phone: '+351 934 567 890'
-    },
-    {
-      id: '3',
-      name: 'João Ferreira',
-      email: 'joao.ferreira@sub.pt',
-      role: 'SUBCONTRACTOR',
-      status: 'ACTIVE',
-      assignedWorks: ['WORK-123'],
-      joinedAt: '2023-03-05',
-      lastActive: 'Ontem',
-      phone: '+351 961 234 567'
-    },
-    {
-      id: '4',
-      name: 'Pedro Santos',
-      email: 'pedro.santos@obrasys.pt',
-      role: 'FOREMAN',
-      status: 'INVITED',
-      assignedWorks: [],
-      joinedAt: '2023-11-20'
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const companyId = getCurrentCompanyId();
+
+  useEffect(() => {
+    if (!companyId) return;
+
+    const q = query(collection(db, 'users'), where('companyId', '==', companyId));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot: QuerySnapshot) => {
+      const teamData: TeamMember[] = [];
+      querySnapshot.forEach((doc) => {
+        teamData.push({ id: doc.id, ...doc.data() } as TeamMember);
+      });
+      setMembers(teamData);
+    }, (error) => {
+      console.error("Error fetching team:", error);
+    });
+
+    return () => unsubscribe();
+  }, [companyId]);
+
+  const addMember = async (data: Partial<TeamMember>) => {
+    if (!companyId) return;
+    try {
+      // Typically invites create a temp doc, here we simulate adding a user
+      await addDoc(collection(db, 'users'), {
+        ...data,
+        companyId,
+        status: 'INVITED',
+        joinedAt: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Error adding member:", e);
     }
-  ]);
-
-  const addMember = (data: Partial<TeamMember>) => {
-    const newMember: TeamMember = {
-      id: Date.now().toString(),
-      name: data.name || '',
-      email: data.email || '',
-      role: data.role || 'WORKER',
-      status: 'INVITED',
-      assignedWorks: data.assignedWorks || [],
-      joinedAt: new Date().toISOString(),
-      phone: data.phone
-    };
-    setMembers([newMember, ...members]);
   };
 
-  const updateMember = (id: string, updates: Partial<TeamMember>) => {
-    setMembers(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m));
+  const updateMember = async (id: string, updates: Partial<TeamMember>) => {
+    try {
+      await updateDoc(doc(db, 'users', id), updates);
+    } catch (e) {
+      console.error("Error updating member:", e);
+    }
   };
 
-  const removeMember = (id: string) => {
-    // Soft delete usually, but for demo remove from list
-    setMembers(prev => prev.filter(m => m.id !== id));
+  const removeMember = async (id: string) => {
+    if (confirm('Tem a certeza que deseja remover este membro?')) {
+      try {
+        await deleteDoc(doc(db, 'users', id));
+      } catch (e) {
+        console.error("Error removing member:", e);
+      }
+    }
   };
 
   const resendInvitation = (id: string) => {

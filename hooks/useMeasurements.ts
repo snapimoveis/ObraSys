@@ -1,37 +1,64 @@
 import { useState, useEffect } from 'react';
 import { Measurement, Budget } from '../types';
 import { createNewMeasurement, calculateMeasurementTotals } from '../utils/measurementUtils';
+import { db, getCurrentCompanyId } from '../services/firebase';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc, QuerySnapshot } from 'firebase/firestore';
 
 export const useMeasurements = (workId: string | undefined, budget: Budget | undefined) => {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(false);
+  const companyId = getCurrentCompanyId();
 
-  // Mock initial load
   useEffect(() => {
-    if (!workId) return;
+    if (!workId || !companyId) return;
     
-    // Simulate API Fetch
     setLoading(true);
-    setTimeout(() => {
-      setMeasurements([]); // Start empty for demo
+    const q = query(
+      collection(db, 'measurements'), 
+      where('workId', '==', workId),
+      where('companyId', '==', companyId)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Measurement));
+      data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setMeasurements(data);
       setLoading(false);
-    }, 500);
-  }, [workId]);
+    });
 
-  const createAuto = () => {
-    if (!budget || !workId) return;
+    return () => unsubscribe();
+  }, [workId, companyId]);
+
+  const createAuto = async () => {
+    if (!budget || !workId || !companyId) return;
     const newAuto = createNewMeasurement(workId, budget, measurements);
-    setMeasurements([newAuto, ...measurements]);
-    return newAuto;
+    
+    try {
+      const docRef = await addDoc(collection(db, 'measurements'), {
+        ...newAuto,
+        companyId
+      });
+      return { ...newAuto, id: docRef.id };
+    } catch (e) {
+      console.error("Error creating measurement:", e);
+    }
   };
 
-  const updateMeasurement = (updated: Measurement) => {
+  const updateMeasurement = async (updated: Measurement) => {
     const recalculated = calculateMeasurementTotals(updated);
-    setMeasurements(prev => prev.map(m => m.id === updated.id ? recalculated : m));
+    try {
+      await updateDoc(doc(db, 'measurements', updated.id), recalculated as any);
+    } catch (e) {
+      console.error("Error updating measurement:", e);
+    }
   };
 
-  const deleteMeasurement = (id: string) => {
-    setMeasurements(prev => prev.filter(m => m.id !== id));
+  const deleteMeasurement = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'measurements', id));
+    } catch (e) {
+      console.error("Error deleting measurement:", e);
+    }
   };
 
   return {

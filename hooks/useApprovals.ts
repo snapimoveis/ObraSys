@@ -1,89 +1,50 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ApprovalRequest, ApprovalStatus, ApprovalHistory } from '../types';
-
-const MOCK_APPROVALS: ApprovalRequest[] = [
-  {
-    id: 'apr-1',
-    type: 'BUDGET',
-    reference: 'Orçamento #2023-001 v2',
-    description: 'Revisão do orçamento da Moradia V4 após alterações do cliente.',
-    workId: 'w1',
-    workName: 'Moradia V4 - Cascais',
-    requester: 'Ana Silva',
-    requesterRole: 'Eng. Civil',
-    requestedAt: new Date(Date.now() - 3600000 * 2).toISOString(), // 2 hours ago
-    amount: 450000,
-    status: 'PENDING',
-    priority: 'HIGH',
-    complianceStatus: 'OK',
-    history: [
-      { id: 'h1', action: 'CREATED', user: 'Ana Silva', date: new Date(Date.now() - 3600000 * 2).toISOString() }
-    ]
-  },
-  {
-    id: 'apr-2',
-    type: 'MEASUREMENT',
-    reference: 'Auto de Medição #3',
-    description: 'Medição mensal de Novembro. Betonagem concluída.',
-    workId: 'w1',
-    workName: 'Moradia V4 - Cascais',
-    requester: 'Carlos Mendes',
-    requesterRole: 'Encarregado',
-    requestedAt: new Date(Date.now() - 3600000 * 24).toISOString(), // 1 day ago
-    amount: 25000,
-    status: 'PENDING',
-    priority: 'MEDIUM',
-    complianceStatus: 'BLOCKED',
-    complianceIssues: ['Falta validação técnica do betão', 'Seguro expirado'],
-    history: [
-      { id: 'h2', action: 'CREATED', user: 'Carlos Mendes', date: new Date(Date.now() - 3600000 * 24).toISOString() }
-    ]
-  },
-  {
-    id: 'apr-3',
-    type: 'RDO',
-    reference: 'RDO #45 (12/11)',
-    description: 'Registo diário com ocorrência de acidente leve.',
-    workId: 'w2',
-    workName: 'Reabilitação Baixa',
-    requester: 'João Ferreira',
-    requesterRole: 'Subempreiteiro',
-    requestedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-    status: 'PENDING',
-    priority: 'CRITICAL',
-    complianceStatus: 'OK',
-    history: [
-      { id: 'h3', action: 'CREATED', user: 'João Ferreira', date: new Date(Date.now() - 3600000 * 4).toISOString() }
-    ]
-  }
-];
+import { db, getCurrentCompanyId } from '../services/firebase';
+import { collection, query, where, onSnapshot, updateDoc, doc, QuerySnapshot } from 'firebase/firestore';
 
 export const useApprovals = () => {
-  const [approvals, setApprovals] = useState<ApprovalRequest[]>(MOCK_APPROVALS);
+  const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
+  const companyId = getCurrentCompanyId();
 
-  const processApproval = (id: string, action: 'APPROVE' | 'REJECT' | 'HOLD', note: string, user: string) => {
-    setApprovals(prev => prev.map(req => {
-      if (req.id !== id) return req;
+  useEffect(() => {
+    if (!companyId) return;
 
-      let newStatus: ApprovalStatus = req.status;
-      if (action === 'APPROVE') newStatus = 'APPROVED';
-      if (action === 'REJECT') newStatus = 'REJECTED';
-      if (action === 'HOLD') newStatus = 'ON_HOLD';
+    const q = query(collection(db, 'approvals'), where('companyId', '==', companyId));
+    
+    const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ApprovalRequest));
+      setApprovals(data);
+    });
 
-      const newHistoryItem: ApprovalHistory = {
-        id: Date.now().toString(),
-        action: action === 'APPROVE' ? 'APPROVED' : action === 'REJECT' ? 'REJECTED' : 'ON_HOLD',
-        user,
-        date: new Date().toISOString(),
-        note
-      };
+    return () => unsubscribe();
+  }, [companyId]);
 
-      return {
-        ...req,
+  const processApproval = async (id: string, action: 'APPROVE' | 'REJECT' | 'HOLD', note: string, user: string) => {
+    const req = approvals.find(a => a.id === id);
+    if (!req) return;
+
+    let newStatus: ApprovalStatus = req.status;
+    if (action === 'APPROVE') newStatus = 'APPROVED';
+    if (action === 'REJECT') newStatus = 'REJECTED';
+    if (action === 'HOLD') newStatus = 'ON_HOLD';
+
+    const newHistoryItem: ApprovalHistory = {
+      id: Date.now().toString(),
+      action: action === 'APPROVE' ? 'APPROVED' : action === 'REJECT' ? 'REJECTED' : 'ON_HOLD',
+      user,
+      date: new Date().toISOString(),
+      note
+    };
+
+    try {
+      await updateDoc(doc(db, 'approvals', id), {
         status: newStatus,
         history: [newHistoryItem, ...req.history]
-      };
-    }));
+      });
+    } catch (e) {
+      console.error("Error processing approval:", e);
+    }
   };
 
   const pendingCount = useMemo(() => approvals.filter(a => a.status === 'PENDING').length, [approvals]);

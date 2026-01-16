@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Task, TaskPriority, TaskStatus, ChecklistItem } from '../types';
 import { generateTaskChecklist } from '../services/geminiService';
 import { Plus, Calendar, User, MoreVertical, Sparkles, X, Clock, Loader2, Percent, CheckSquare, Square } from 'lucide-react';
+import { db, getCurrentCompanyId } from '../services/firebase';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, QuerySnapshot } from 'firebase/firestore';
 
 const getPriorityColor = (priority: TaskPriority) => {
   switch (priority) {
@@ -106,59 +108,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onMoveTask, onUpdateProgress,
             <Calendar size={12} />
             {new Date(task.dueDate).toLocaleDateString('pt-PT', {day: '2-digit', month: '2-digit'})}
         </div>
-        <div className="flex items-center gap-1 text-slate-400 text-[10px]" title={`Criado em: ${new Date(task.createdAt).toLocaleDateString('pt-PT')}`}>
-            <Clock size={10} />
-            {new Date(task.createdAt).toLocaleDateString('pt-PT', {day: '2-digit', month: '2-digit'})}
-        </div>
       </div>
     </div>
   </div>
 );
 
 const TaskManagement: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Instalar Quadro Elétrico',
-      description: 'Verificar especificações técnicas antes de iniciar.',
-      checklist: [
-        { id: 'c1', text: 'Verificar esquema unifilar', completed: true },
-        { id: 'c2', text: 'Fixar caixa', completed: false },
-        { id: 'c3', text: 'Ligar disjuntores conforme projeto', completed: false }
-      ],
-      project: 'Vila Nova',
-      assignee: 'João Ferreira',
-      status: 'TODO',
-      priority: 'HIGH',
-      dueDate: '2023-11-20',
-      progress: 33,
-      createdAt: '2023-11-01'
-    },
-    {
-      id: '2',
-      title: 'Pintura Fachada Norte',
-      description: 'Aplicar primário e duas demãos de tinta acrílica.',
-      project: 'Reab. Centro',
-      assignee: 'Ana Silva',
-      status: 'IN_PROGRESS',
-      priority: 'MEDIUM',
-      dueDate: '2023-11-25',
-      progress: 45,
-      createdAt: '2023-11-05'
-    },
-    {
-      id: '3',
-      title: 'Compra de Cerâmicas',
-      description: 'Encomendar revestimento WC Suite.',
-      project: 'Apt. Silva',
-      assignee: 'Carlos Mendes',
-      status: 'DONE',
-      priority: 'LOW',
-      dueDate: '2023-11-10',
-      progress: 100,
-      createdAt: '2023-10-20'
-    }
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const companyId = getCurrentCompanyId();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
@@ -168,13 +126,26 @@ const TaskManagement: React.FC = () => {
     title: '',
     description: '',
     checklist: [],
-    project: 'Vila Nova',
-    assignee: 'Carlos Mendes',
+    project: 'Geral',
+    assignee: 'Eu',
     priority: 'MEDIUM',
     dueDate: new Date().toISOString().split('T')[0],
     status: 'TODO',
     progress: 0
   });
+
+  useEffect(() => {
+    if (!companyId) return;
+
+    const q = query(collection(db, 'tasks'), where('companyId', '==', companyId));
+    const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
+      setTasks(data);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [companyId]);
 
   // Generates Checklist and populates the checklist array instead of just description
   const generateChecklist = async () => {
@@ -204,73 +175,84 @@ const TaskManagement: React.FC = () => {
     setLoadingAI(false);
   };
 
-  const handleCreateTask = () => {
-    if (!newTask.title) return;
-    const task: Task = {
-      id: Date.now().toString(),
-      title: newTask.title!,
-      description: newTask.description || '',
-      checklist: newTask.checklist || [],
-      project: newTask.project!,
-      assignee: newTask.assignee!,
-      status: 'TODO',
-      priority: newTask.priority as TaskPriority,
-      dueDate: newTask.dueDate!,
-      progress: newTask.progress || 0,
-      createdAt: new Date().toISOString()
-    };
-    setTasks([...tasks, task]);
-    setIsModalOpen(false);
-    setNewTask({
-      title: '',
-      description: '',
-      checklist: [],
-      project: 'Vila Nova',
-      assignee: 'Carlos Mendes',
-      priority: 'MEDIUM',
-      dueDate: new Date().toISOString().split('T')[0],
-      status: 'TODO',
-      progress: 0
+  const handleCreateTask = async () => {
+    if (!newTask.title || !companyId) return;
+    
+    try {
+        await addDoc(collection(db, 'tasks'), {
+            companyId,
+            title: newTask.title!,
+            description: newTask.description || '',
+            checklist: newTask.checklist || [],
+            project: newTask.project!,
+            assignee: newTask.assignee!,
+            status: 'TODO',
+            priority: newTask.priority as TaskPriority,
+            dueDate: newTask.dueDate!,
+            progress: newTask.progress || 0,
+            createdAt: new Date().toISOString()
+        });
+
+        setIsModalOpen(false);
+        setNewTask({
+            title: '',
+            description: '',
+            checklist: [],
+            project: 'Geral',
+            assignee: 'Eu',
+            priority: 'MEDIUM',
+            dueDate: new Date().toISOString().split('T')[0],
+            status: 'TODO',
+            progress: 0
+        });
+    } catch (e) {
+        console.error("Error creating task:", e);
+    }
+  };
+
+  const moveTask = async (taskId: string, newStatus: TaskStatus) => {
+    await updateDoc(doc(db, 'tasks', taskId), { status: newStatus });
+  };
+
+  const updateProgress = async (taskId: string, newProgress: number) => {
+    const validProgress = Math.min(100, Math.max(0, newProgress));
+    await updateDoc(doc(db, 'tasks', taskId), { progress: validProgress });
+  };
+
+  const toggleChecklistItem = async (taskId: string, itemId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || !task.checklist) return;
+
+    const updatedChecklist = task.checklist.map(item => 
+      item.id === itemId ? { ...item, completed: !item.completed } : item
+    );
+
+    // Auto-calculate progress
+    const completedCount = updatedChecklist.filter(i => i.completed).length;
+    const progress = Math.round((completedCount / updatedChecklist.length) * 100);
+
+    // Auto-update status based on progress
+    let status = task.status;
+    if (progress === 100) status = 'DONE';
+    else if (progress > 0 && status === 'TODO') status = 'IN_PROGRESS';
+
+    await updateDoc(doc(db, 'tasks', taskId), {
+        checklist: updatedChecklist,
+        progress,
+        status
     });
   };
 
-  const moveTask = (taskId: string, newStatus: TaskStatus) => {
-    setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
-  };
-
-  const updateProgress = (taskId: string, newProgress: number) => {
-    const validProgress = Math.min(100, Math.max(0, newProgress));
-    setTasks(tasks.map(t => t.id === taskId ? { ...t, progress: validProgress } : t));
-  };
-
-  const toggleChecklistItem = (taskId: string, itemId: string) => {
-    setTasks(prevTasks => prevTasks.map(task => {
-      if (task.id !== taskId || !task.checklist) return task;
-
-      const updatedChecklist = task.checklist.map(item => 
-        item.id === itemId ? { ...item, completed: !item.completed } : item
-      );
-
-      // Auto-calculate progress
-      const completedCount = updatedChecklist.filter(i => i.completed).length;
-      const progress = Math.round((completedCount / updatedChecklist.length) * 100);
-
-      // Auto-update status based on progress (Optional, but nice UX)
-      let status = task.status;
-      if (progress === 100) status = 'DONE';
-      else if (progress > 0 && status === 'TODO') status = 'IN_PROGRESS';
-
-      return { ...task, checklist: updatedChecklist, progress, status };
-    }));
-  };
-
-  // Helper for modal checklist rendering
   const removeNewTaskChecklistItem = (itemId: string) => {
     setNewTask(prev => ({
       ...prev,
       checklist: prev.checklist?.filter(i => i.id !== itemId)
     }));
   };
+
+  if (loading) {
+      return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-[#00609C]" /></div>;
+  }
 
   return (
     <div className="space-y-6 h-[calc(100vh-140px)] flex flex-col animate-fade-in">
@@ -405,9 +387,8 @@ const TaskManagement: React.FC = () => {
                     value={newTask.project}
                     onChange={(e) => setNewTask({...newTask, project: e.target.value})}
                   >
-                    <option value="Vila Nova">Vila Nova</option>
-                    <option value="Reab. Centro">Reab. Centro</option>
-                    <option value="Apt. Silva">Apt. Silva</option>
+                    <option value="Geral">Geral</option>
+                    {/* In a real app, populate from Works */}
                   </select>
                 </div>
                 <div>
@@ -417,9 +398,8 @@ const TaskManagement: React.FC = () => {
                     value={newTask.assignee}
                     onChange={(e) => setNewTask({...newTask, assignee: e.target.value})}
                   >
-                    <option value="Carlos Mendes">Carlos Mendes</option>
-                    <option value="Ana Silva">Ana Silva</option>
-                    <option value="João Ferreira">João Ferreira</option>
+                    <option value="Eu">Eu</option>
+                    <option value="Equipa">Equipa</option>
                   </select>
                 </div>
               </div>

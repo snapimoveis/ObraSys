@@ -1,47 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, Filter, Download, HardHat, CheckCircle2, 
-  AlertTriangle, TrendingUp, DollarSign, ArrowRight, BookOpen 
+  AlertTriangle, TrendingUp, DollarSign, ArrowRight, BookOpen, Loader2
 } from 'lucide-react';
-import { Work } from '../types';
+import { Work, WorkStatus } from '../types';
 import WorkDetail from './works/WorkDetail';
 import SiteLogOverview from './site-log/SiteLogOverview';
-import { createWorkFromBudget, getStatusColor } from '../utils/workUtils';
-
-// Mock Budget for Demo Purposes
-const mockBudget: any = {
-  id: '1',
-  title: 'Moradia V4 - Cascais',
-  client: 'Ana Pereira',
-  projectLocation: 'Cascais, Lisboa',
-  totalPrice: 450000,
-  chapters: [
-    { id: 'c1', name: 'Estaleiro e Trabalhos Preparatórios', subChapters: [{ id: 's1', name: 'Montagem de Estaleiro', totalPrice: 5000 }, { id: 's2', name: 'Movimento de Terras', totalPrice: 15000 }], items: [] },
-    { id: 'c2', name: 'Estruturas', subChapters: [{ id: 's3', name: 'Betão Armado', totalPrice: 120000 }], items: [] },
-    { id: 'c3', name: 'Alvenarias', subChapters: [{ id: 's4', name: 'Paredes Exteriores', totalPrice: 40000 }, { id: 's5', name: 'Divisórias', totalPrice: 20000 }], items: [] }
-  ]
-};
+import { getStatusColor } from '../utils/workUtils';
+import { db, getCurrentCompanyId } from '../services/firebase';
+import { collection, query, where, onSnapshot, updateDoc, doc, QuerySnapshot } from 'firebase/firestore';
 
 const SiteManagement: React.FC = () => {
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
   const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'SITE_LOG'>('DASHBOARD');
   
-  // Mock List of Works
+  // Firestore State
   const [works, setWorks] = useState<Work[]>([]);
+  const [loading, setLoading] = useState(true);
+  const companyId = getCurrentCompanyId();
 
-  // DEMO: Create a work automatically if empty
-  React.useEffect(() => {
-     if (works.length === 0) {
-        const demoWork = createWorkFromBudget(mockBudget);
-        setWorks([demoWork]);
-     }
-  }, []);
+  useEffect(() => {
+    if (!companyId) return;
 
-  const handleUpdateWork = (updated: Work) => {
-     setWorks(prev => prev.map(w => w.id === updated.id ? updated : w));
-     // Also update selected work if it's the one being edited
-     if (selectedWork?.id === updated.id) {
-        setSelectedWork(updated);
+    const q = query(
+      collection(db, 'works'), 
+      where('companyId', '==', companyId)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Work));
+      setWorks(data);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [companyId]);
+
+  const handleUpdateWork = async (updated: Work) => {
+     try {
+       await updateDoc(doc(db, 'works', updated.id), updated as any);
+       if (selectedWork?.id === updated.id) {
+          setSelectedWork(updated);
+       }
+     } catch (e) {
+       console.error("Error updating work:", e);
+       alert("Erro ao atualizar obra.");
      }
   };
 
@@ -82,10 +85,7 @@ const SiteManagement: React.FC = () => {
         </div>
         <div className="flex gap-2">
            <button 
-             onClick={() => {
-               // Simulate creating a new work from a budget selection (Stub)
-               alert("Num cenário real, isto abriria a lista de Orçamentos Aprovados para selecionar.");
-             }}
+             onClick={() => alert("Para criar uma obra, aprove um orçamento na secção 'Orçamentos'.")}
              className="bg-[#00609C] hover:bg-[#005082] text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm text-sm font-medium transition-colors"
            >
               <Plus size={16} />
@@ -117,7 +117,9 @@ const SiteManagement: React.FC = () => {
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
            <div>
               <p className="text-xs font-medium text-slate-500 uppercase">Em Atraso</p>
-              <h3 className="text-2xl font-bold text-slate-800">0</h3>
+              <h3 className="text-2xl font-bold text-slate-800">
+                {works.filter(w => w.schedule.some(p => p.tasks.some(t => t.status === 'DELAYED'))).length}
+              </h3>
            </div>
            <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><AlertTriangle size={20}/></div>
         </div>
@@ -126,7 +128,7 @@ const SiteManagement: React.FC = () => {
               <p className="text-xs font-medium text-slate-500 uppercase">Volume em Execução</p>
               <h3 className="text-2xl font-bold text-slate-800">
                 {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(
-                  works.reduce((acc, w) => acc + w.totalBudget, 0)
+                  works.reduce((acc, w) => acc + (w.status === 'EXECUTION' ? w.totalBudget : 0), 0)
                 )}
               </h3>
            </div>
@@ -141,11 +143,15 @@ const SiteManagement: React.FC = () => {
           <button className="text-sm text-[#00609C] font-medium hover:underline">Ver todas</button>
         </div>
         
-        {works.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-48">
+            <Loader2 className="animate-spin text-[#00609C]" size={32} />
+          </div>
+        ) : works.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center text-slate-400">
              <HardHat size={48} className="mb-4 opacity-50"/>
              <p className="text-sm font-medium">Nenhuma obra registada.</p>
-             <p className="text-xs">Aprove um orçamento para começar.</p>
+             <p className="text-xs">Aprove um orçamento para criar automaticamente uma obra.</p>
           </div>
         ) : (
           <table className="w-full text-left border-collapse">
@@ -158,7 +164,7 @@ const SiteManagement: React.FC = () => {
                 <th className="px-6 py-4 text-right">Ação</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-100">
               {works.map((work) => (
                 <tr key={work.id} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-6 py-4 cursor-pointer" onClick={() => setSelectedWork(work)}>

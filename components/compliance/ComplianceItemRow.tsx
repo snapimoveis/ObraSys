@@ -3,7 +3,7 @@ import { ComplianceItem, ComplianceStatus } from '../../types';
 import { getTypeColor } from '../../utils/complianceRules';
 import ComplianceStatusBadge from './ComplianceStatusBadge';
 import ComplianceAuditLog from './ComplianceAuditLog';
-import { ChevronDown, ChevronRight, AlertCircle, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, AlertCircle, FileText, CheckCircle, XCircle, History } from 'lucide-react';
 
 interface Props {
   item: ComplianceItem;

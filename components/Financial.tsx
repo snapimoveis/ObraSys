@@ -74,8 +74,8 @@ const Financial: React.FC = () => {
   const { measurements, createAuto, updateMeasurement } = useMeasurements(mockWork.id, mockBudget);
   const { costs, addCost, deleteCost, stats } = useRealCosts(mockWork.id);
 
-  const handleCreateAuto = () => {
-    const newAuto = createAuto();
+  const handleCreateAuto = async () => {
+    const newAuto = await createAuto();
     if (newAuto) setSelectedMeasurement(newAuto);
   };
 

@@ -1,31 +1,41 @@
 import { useState, useMemo, useEffect } from 'react';
 import { ComplianceItem, ComplianceStatus, AuditLog } from '../types';
-import { generateInitialCompliance } from '../utils/complianceRules';
+import { db, getCurrentCompanyId } from '../services/firebase';
+import { collection, query, where, onSnapshot, updateDoc, doc, QuerySnapshot } from 'firebase/firestore';
 
 export const useCompliance = (workId: string | undefined) => {
   const [items, setItems] = useState<ComplianceItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const companyId = getCurrentCompanyId();
 
-  // Mock initial load
+  // Load items from Firestore
   useEffect(() => {
-    if (!workId) {
+    if (!workId || !companyId) {
       setItems([]);
       return;
     }
     
     setLoading(true);
-    // Simulate API delay
-    setTimeout(() => {
-      setItems(generateInitialCompliance(workId));
+    const q = query(
+      collection(db, 'complianceItems'), 
+      where('workId', '==', workId),
+      where('companyId', '==', companyId)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ComplianceItem));
+      setItems(data);
       setLoading(false);
-    }, 600);
-  }, [workId]);
+    });
 
-  const updateStatus = (itemId: string, newStatus: ComplianceStatus, user: string, reason?: string, evidence?: string) => {
-    setItems(prevItems => prevItems.map(item => {
-      if (item.id !== itemId) return item;
+    return () => unsubscribe();
+  }, [workId, companyId]);
 
-      const log: AuditLog = {
+  const updateStatus = async (itemId: string, newStatus: ComplianceStatus, user: string, reason?: string, evidence?: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+
+    const log: AuditLog = {
         id: Date.now().toString(),
         date: new Date().toISOString(),
         user,
@@ -33,37 +43,46 @@ export const useCompliance = (workId: string | undefined) => {
         previousValue: item.status,
         newValue: newStatus,
         reason: reason || 'Atualização manual'
-      };
+    };
 
-      return {
-        ...item,
+    const updates: Partial<ComplianceItem> = {
         status: newStatus,
-        evidence: evidence !== undefined ? evidence : item.evidence,
         lastUpdated: new Date().toISOString(),
-        auditTrail: [log, ...item.auditTrail] // Append log
-      };
-    }));
+        auditTrail: [log, ...item.auditTrail]
+    };
+
+    if (evidence !== undefined) {
+        updates.evidence = evidence;
+    }
+
+    try {
+        await updateDoc(doc(db, 'complianceItems', itemId), updates);
+    } catch (e) {
+        console.error("Error updating compliance status:", e);
+    }
   };
 
-  const addEvidence = (itemId: string, note: string, user: string) => {
-    setItems(prevItems => prevItems.map(item => {
-      if (item.id !== itemId) return item;
+  const addEvidence = async (itemId: string, note: string, user: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
 
-      const log: AuditLog = {
+    const log: AuditLog = {
         id: Date.now().toString(),
         date: new Date().toISOString(),
         user,
         action: 'ADD_EVIDENCE',
         newValue: note,
-      };
+    };
 
-      return {
-        ...item,
-        evidence: note,
-        lastUpdated: new Date().toISOString(),
-        auditTrail: [log, ...item.auditTrail]
-      };
-    }));
+    try {
+        await updateDoc(doc(db, 'complianceItems', itemId), {
+            evidence: note,
+            lastUpdated: new Date().toISOString(),
+            auditTrail: [log, ...item.auditTrail]
+        });
+    } catch (e) {
+        console.error("Error adding evidence:", e);
+    }
   };
 
   const stats = useMemo(() => {

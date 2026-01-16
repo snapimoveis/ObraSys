@@ -1,43 +1,59 @@
-import React, { useState } from 'react';
-import { Plus, UserPlus, FolderOpen, MoreVertical } from 'lucide-react';
-import BudgetEditor from './budget/BudgetEditor'; // Updated Import
+import React, { useState, useEffect } from 'react';
+import { Plus, UserPlus, FolderOpen, MoreVertical, Loader2 } from 'lucide-react';
+import BudgetEditor from './budget/BudgetEditor'; 
 import { Budget } from '../types';
+import { db, getCurrentCompanyId } from '../services/firebase';
+import { collection, query, where, onSnapshot, setDoc, doc, orderBy, QuerySnapshot } from 'firebase/firestore';
 
 const Budgeting: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ORCAMENTOS' | 'CLIENTES' | 'BASE_PRECOS'>('ORCAMENTOS');
   const [viewMode, setViewMode] = useState<'LIST' | 'EDITOR'>('LIST');
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
+  
+  // Real Data State
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [loading, setLoading] = useState(true);
+  const companyId = getCurrentCompanyId();
 
-  // Mock List
-  const [budgets, setBudgets] = useState<any[]>([
-    { id: '1', title: 'Orçamento Base', project: 'Reabilitação Vila Nova', client: 'João Silva', date: '2023-11-10', total: 120450, status: 'DRAFT', version: 1 },
-    { id: '2', title: 'Revisão Cliente', project: 'Reabilitação Vila Nova', client: 'João Silva', date: '2023-11-15', total: 128300, status: 'REVIEW', version: 2 },
-    { id: '3', title: 'Orçamento Inicial', project: 'Escritórios TechHub', client: 'TechCorp SA', date: '2023-10-25', total: 245000, status: 'APPROVED', version: 1 },
-  ]);
+  useEffect(() => {
+    if (!companyId) return;
 
-  const handleOpenBudget = (budget?: any) => {
-    // If it's a new budget, create a skeleton
-    const budgetToOpen = budget || null;
-    setSelectedBudget(budgetToOpen);
+    const q = query(
+      collection(db, 'budgets'), 
+      where('companyId', '==', companyId)
+      // orderBy('date', 'desc') // Requires index in Firestore
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Budget));
+      // Manual sort until index is ready
+      data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setBudgets(data);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [companyId]);
+
+  const handleOpenBudget = (budget?: Budget) => {
+    setSelectedBudget(budget || null);
     setViewMode('EDITOR');
   };
 
-  const handleSaveBudget = (savedBudget: Budget) => {
-    // Mock Update logic
-    const exists = budgets.find(b => b.id === savedBudget.id);
-    if (!exists) {
-        setBudgets(prev => [{
-            id: savedBudget.id,
-            title: savedBudget.title,
-            project: savedBudget.projectLocation || 'Novo Projeto',
-            client: savedBudget.client,
-            date: new Date().toISOString(),
-            total: savedBudget.totalPrice,
-            status: savedBudget.status,
-            version: savedBudget.version
-        }, ...prev]);
+  const handleSaveBudget = async (savedBudget: Budget) => {
+    if (!companyId) return;
+
+    try {
+      // Ensure companyId is attached
+      const budgetToSave = { ...savedBudget, companyId };
+      
+      // Use setDoc to create or overwrite based on ID
+      await setDoc(doc(db, 'budgets', savedBudget.id), budgetToSave);
+      setViewMode('LIST');
+    } catch (error) {
+      console.error("Error saving budget:", error);
+      alert("Erro ao guardar orçamento.");
     }
-    setViewMode('LIST');
   };
 
   const getStatusBadge = (status: string) => {
@@ -84,7 +100,7 @@ const Budgeting: React.FC = () => {
           onClick={() => setActiveTab('ORCAMENTOS')}
           className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'ORCAMENTOS' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
-          Orçamentos do Projeto
+          Orçamentos
         </button>
         <button 
           onClick={() => setActiveTab('CLIENTES')}
@@ -103,40 +119,38 @@ const Budgeting: React.FC = () => {
       {/* Content Area */}
       {activeTab === 'ORCAMENTOS' && (
         <div className="space-y-6 flex-1 overflow-hidden flex flex-col">
-            
-            {/* Project Section Example 1 */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex-shrink-0">
-                 <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white border border-slate-200 rounded-lg text-[#00609C]">
-                            <FolderOpen size={20} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-slate-800">Reabilitação Vila Nova</h3>
-                            <p className="text-xs text-slate-500">Cliente: João Silva</p>
-                        </div>
-                    </div>
-                    <button onClick={() => handleOpenBudget()} className="text-xs font-medium text-[#00609C] hover:underline flex items-center gap-1">
-                        <Plus size={14} /> Novo Orçamento
-                    </button>
-                 </div>
-                 
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <Loader2 className="animate-spin text-[#00609C]" size={32} />
+              </div>
+            ) : budgets.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-12 text-center text-slate-400 bg-white rounded-lg border border-dashed border-slate-300">
+                 <FolderOpen size={48} className="mb-4 opacity-50"/>
+                 <p className="text-sm font-medium">Nenhum orçamento encontrado.</p>
+                 <button onClick={() => handleOpenBudget()} className="mt-2 text-[#00609C] hover:underline font-bold text-sm">Criar o primeiro</button>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex-shrink-0">
                  <table className="w-full text-left border-collapse">
                     <thead className="bg-white border-b border-slate-100 text-xs font-bold text-slate-400 uppercase">
                         <tr>
-                            <th className="px-6 py-3">Nome do Orçamento</th>
+                            <th className="px-6 py-3">Título / Projeto</th>
+                            <th className="px-6 py-3">Cliente</th>
                             <th className="px-6 py-3 w-24 text-center">Versão</th>
                             <th className="px-6 py-3 w-32">Estado</th>
                             <th className="px-6 py-3 text-right">Total (€)</th>
                             <th className="px-6 py-3 w-32 text-right">Ações</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50">
-                        {budgets.filter(b => b.project === 'Reabilitação Vila Nova').map((budget) => (
+                    <tbody className="divide-y divide-slate-5">
+                        {budgets.map((budget) => (
                             <tr key={budget.id} className="hover:bg-blue-50/50 transition-colors group">
                                 <td className="px-6 py-4">
                                     <div className="font-bold text-sm text-slate-700">{budget.title}</div>
-                                    <div className="text-xs text-slate-400">{new Date(budget.date).toLocaleDateString('pt-PT')}</div>
+                                    <div className="text-xs text-slate-400">{budget.projectLocation}</div>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-slate-600">
+                                    {budget.client}
                                 </td>
                                 <td className="px-6 py-4 text-center">
                                     <span className="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-600">v{budget.version}</span>
@@ -145,7 +159,7 @@ const Budgeting: React.FC = () => {
                                     {getStatusBadge(budget.status)}
                                 </td>
                                 <td className="px-6 py-4 text-right font-bold text-slate-800 text-sm">
-                                    {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(budget.total)}
+                                    {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(budget.totalPrice)}
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -164,7 +178,8 @@ const Budgeting: React.FC = () => {
                         ))}
                     </tbody>
                  </table>
-            </div>
+              </div>
+            )}
         </div>
       )}
 

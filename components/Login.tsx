@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Logo } from './Logo';
-import { Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle, Mail } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle, Mail, Loader2 } from 'lucide-react';
+import { auth, db } from '../services/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface LoginProps {
   onLogin: () => void;
@@ -10,7 +13,8 @@ interface LoginProps {
 export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToRegister }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string, form?: string }>({});
 
   const validate = () => {
     const newErrors: typeof errors = {};
@@ -30,17 +34,47 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToRegister }) =
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) {
-      onLogin();
+    if (!validate()) return;
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      // 1. Authenticate
+      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+
+      // 2. Get User Profile to find Company ID
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as { companyId?: string };
+        if (userData.companyId) {
+          localStorage.setItem('obrasys_company_id', userData.companyId);
+          onLogin();
+        } else {
+          setErrors({ form: 'Utilizador sem empresa associada. Contacte o suporte.' });
+        }
+      } else {
+        setErrors({ form: 'Perfil de utilizador não encontrado.' });
+      }
+
+    } catch (error: any) {
+      console.error("Login error", error);
+      let msg = 'Ocorreu um erro ao entrar.';
+      if (error.code === 'auth/invalid-credential') msg = 'Email ou palavra-passe incorretos.';
+      setErrors({ form: msg });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user types
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
@@ -57,6 +91,13 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToRegister }) =
           <h2 className="text-2xl font-bold text-[#00609C]">Entrar na sua conta</h2>
           <p className="text-slate-500 text-sm mt-2">Aceda à sua conta para gerir as suas obras</p>
         </div>
+
+        {errors.form && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm mb-4 flex items-center gap-2">
+            <AlertCircle size={16} />
+            {errors.form}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -118,10 +159,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToRegister }) =
 
           <button 
             type="submit"
-            className="w-full bg-[#00609C] hover:bg-[#004e80] text-white font-bold py-3 rounded-md flex items-center justify-center gap-2 transition-colors shadow-sm mt-6"
+            disabled={loading}
+            className="w-full bg-[#00609C] hover:bg-[#004e80] text-white font-bold py-3 rounded-md flex items-center justify-center gap-2 transition-colors shadow-sm mt-6 disabled:opacity-50"
           >
-            <span>Entrar</span>
-            <ArrowRight size={18} />
+            {loading ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <>
+                <span>Entrar</span>
+                <ArrowRight size={18} />
+              </>
+            )}
           </button>
         </form>
 

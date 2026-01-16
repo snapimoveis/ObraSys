@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Logo } from './Logo';
-import { Eye, EyeOff, ArrowLeft, UserPlus, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, UserPlus, AlertCircle, Loader2 } from 'lucide-react';
+import { auth, db } from '../services/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, collection } from 'firebase/firestore';
 
 interface RegisterProps {
   onRegister: () => void;
@@ -10,6 +13,7 @@ interface RegisterProps {
 export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -60,10 +64,55 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) {
+    if (!validate()) return;
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      // 1. Create Auth User
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+
+      // 2. Create Company Document (generate a random ID or let Firestore do it)
+      const companyRef = doc(collection(db, 'companies'));
+      const companyId = companyRef.id;
+
+      await setDoc(companyRef, {
+        name: formData.companyName,
+        nif: formData.nif,
+        type: formData.clientType,
+        createdAt: new Date().toISOString(),
+        ownerId: user.uid,
+        email: formData.email,
+        phone: formData.phone
+      });
+
+      // 3. Create User Profile with Company Association
+      await setDoc(doc(db, 'users', user.uid), {
+        email: formData.email,
+        name: formData.name,
+        phone: formData.phone,
+        companyId: companyId,
+        role: 'admin',
+        createdAt: new Date().toISOString(),
+        status: 'ACTIVE'
+      });
+
+      // 4. Save session context
+      localStorage.setItem('obrasys_company_id', companyId);
+
       onRegister();
+
+    } catch (error: any) {
+      console.error("Register Error:", error);
+      let msg = "Erro ao criar conta.";
+      if (error.code === 'auth/email-already-in-use') msg = "Este e-mail já está registado.";
+      setErrors({ form: msg });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -89,6 +138,13 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
           <h2 className="text-2xl font-bold text-[#00609C]">Criar Conta</h2>
           <p className="text-slate-500 text-sm mt-2">Registe-se para começar a gerir as suas obras</p>
         </div>
+
+        {errors.form && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm mb-4 flex items-center gap-2">
+            <AlertCircle size={16} />
+            {errors.form}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           
@@ -248,9 +304,10 @@ export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogi
 
           <button 
             type="submit"
-            className="w-full bg-[#00609C] hover:bg-[#004e80] text-white font-bold py-3 rounded-md flex items-center justify-center gap-2 transition-colors shadow-sm mt-6"
+            disabled={loading}
+            className="w-full bg-[#00609C] hover:bg-[#004e80] text-white font-bold py-3 rounded-md flex items-center justify-center gap-2 transition-colors shadow-sm mt-6 disabled:opacity-50"
           >
-            <UserPlus size={18} />
+            {loading ? <Loader2 className="animate-spin" /> : <UserPlus size={18} />}
             <span>Criar Conta</span>
           </button>
         </form>
