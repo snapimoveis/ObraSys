@@ -7,6 +7,7 @@ import SiteManagement from './components/SiteManagement';
 import Schedule from './components/Schedule';
 import Team from './components/Team';
 import Compliance from './components/Compliance';
+import Approvals from './components/Approvals';
 import Financial from './components/Financial';
 import Reports from './components/Reports';
 import Prices from './components/Prices';
@@ -15,11 +16,33 @@ import Plans from './components/Plans';
 import CompanyManagement from './components/CompanyManagement';
 import ProfileModal from './components/ProfileModal';
 import TaskManagement from './components/TaskManagement';
+import Support from './components/Support';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { Menu, Bell, Settings, Search, ChevronLeft, User, Building2, LogOut } from 'lucide-react';
 
 type AuthView = 'LOGIN' | 'REGISTER' | 'APP';
+
+// Centralized mapping for breadcrumb labels
+const VIEW_LABELS: Record<View, string> = {
+  [View.DASHBOARD]: 'Painel de Controlo',
+  [View.BUDGETING]: 'Orçamentos',
+  [View.SITE_MANAGEMENT]: 'Obras',
+  [View.SCHEDULE]: 'Cronograma',
+  [View.TEAM]: 'Colaboradores',
+  [View.COMPLIANCE]: 'Conformidade',
+  [View.APPROVALS]: 'Gestão de Aprovações',
+  [View.FINANCIAL]: 'Financeiro',
+  [View.REPORTS]: 'Relatórios',
+  [View.PLANS]: 'Nossos Planos',
+  [View.PRICES]: 'Base de Preços',
+  [View.ARTICLES]: 'Artigos de Trabalho',
+  [View.AUTOMATION]: 'Automação & Inteligência',
+  [View.COMPANY_SETTINGS]: 'Gestão da Empresa',
+  [View.TASKS]: 'Tarefas de Equipa',
+  [View.INVOICING]: 'Faturação',
+  [View.SUPPORT]: 'Suporte',
+};
 
 const App: React.FC = () => {
   const [currentAuthView, setCurrentAuthView] = useState<AuthView>('LOGIN');
@@ -67,8 +90,7 @@ const App: React.FC = () => {
       case View.COMPLIANCE:
         return <Compliance setCurrentView={setCurrentView} />;
       case View.APPROVALS:
-         // Reusing compliance for now as it has approvals tab logic potential
-         return <Compliance setCurrentView={setCurrentView} />;
+         return <Approvals />;
       case View.FINANCIAL:
         return <Financial />;
       case View.REPORTS:
@@ -81,6 +103,8 @@ const App: React.FC = () => {
         return <Articles />;
       case View.COMPANY_SETTINGS:
         return <CompanyManagement />;
+      case View.SUPPORT:
+        return <Support />;
       case View.INVOICING:
         return (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
@@ -124,12 +148,10 @@ const App: React.FC = () => {
             </button>
             {/* Breadcrumb / Title area */}
              <div className="hidden md:flex items-center text-sm text-slate-500">
-               <span className="font-bold text-[#00609C]">Obra Sys</span>
-               <ChevronLeft size={16} className="mx-2 rotate-180" />
+               <span className="font-bold text-[#00609C]">ObraSys</span>
+               <ChevronLeft size={16} className="mx-2 rotate-180 text-slate-300" />
                <span className="text-slate-800 font-medium">
-                 {currentView === View.DASHBOARD ? 'Painel de Controlo' : 
-                  currentView === View.COMPANY_SETTINGS ? 'Gestão da Empresa' :
-                  'Área de Trabalho'}
+                 {VIEW_LABELS[currentView] || 'Página Desconhecida'}
                </span>
              </div>
           </div>

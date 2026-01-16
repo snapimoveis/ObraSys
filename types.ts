@@ -15,22 +15,231 @@ export enum View {
   COMPANY_SETTINGS = 'COMPANY_SETTINGS',
   TASKS = 'TASKS', 
   INVOICING = 'INVOICING',
+  SUPPORT = 'SUPPORT',
 }
 
-// --- FINANCE (GLOBAL) ---
+// --- SUPPORT ---
+
+export interface Ticket {
+  id: string;
+  subject: string;
+  category: 'TECHNICAL' | 'FINANCIAL' | 'FEATURE' | 'OTHER';
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  createdAt: string;
+  lastUpdate: string;
+  messages: TicketMessage[];
+}
+
+export interface TicketMessage {
+  id: string;
+  sender: 'USER' | 'SUPPORT';
+  text: string;
+  timestamp: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  timestamp: Date;
+}
+
+// --- BUDGET ---
+
+export type BudgetStatus = 'DRAFT' | 'REVIEW' | 'APPROVED' | 'EXECUTION' | 'CLOSED';
+export type BudgetItemType = 'MATERIAL' | 'LABOR' | 'EQUIPMENT' | 'SUBCONTRACT';
+
+export interface BudgetItem {
+  id: string;
+  code: string;
+  description: string;
+  type: BudgetItemType;
+  unit: string;
+  quantity: number;
+  unitCost: number;
+  marginPercent: number;
+  totalCost: number;
+  totalPrice: number;
+  unitPrice: number;
+  supplier?: string;
+  notes?: string;
+}
+
+export interface BudgetChapter {
+  id: string;
+  name: string;
+  items: BudgetItem[];
+  subChapters: BudgetChapter[];
+  totalCost: number;
+  totalPrice: number;
+}
+
+export type BudgetSubChapter = BudgetChapter;
+
+export interface Budget {
+  id: string;
+  reference: string;
+  title: string;
+  client: string;
+  projectLocation: string;
+  version: number;
+  status: BudgetStatus;
+  date: string;
+  chapters: BudgetChapter[];
+  totalCost: number;
+  totalPrice: number;
+  totalMargin: number;
+  marginPercent: number;
+  totalTax: number;
+  companyId?: string;
+}
+
+// --- WORK / SCHEDULE ---
+
+export type WorkStatus = 'CREATED' | 'PLANNING' | 'EXECUTION' | 'SUSPENDED' | 'COMPLETED' | 'CLOSED' | 'DELAYED';
+
+export interface ScheduleTask {
+  id: string;
+  name: string;
+  budugetRefId?: string;
+  budgetRefType?: 'CHAPTER' | 'SUBCHAPTER' | 'ITEM';
+  startDate: string;
+  endDate: string;
+  durationDays: number;
+  progress: number;
+  status: 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'DELAYED';
+  weight: number;
+  totalValue: number;
+}
+
+export interface SchedulePhase {
+  id: string;
+  name: string;
+  budgetChapterId?: string;
+  tasks: ScheduleTask[];
+  isExpanded?: boolean;
+}
+
+export interface Work {
+  id: string;
+  budgetId: string;
+  budgetTitle: string;
+  title: string;
+  client: string;
+  location: string;
+  status: WorkStatus;
+  startDate: string;
+  expectedEndDate: string;
+  schedule: SchedulePhase[];
+  totalBudget: number;
+  executedValue: number;
+  physicalProgress: number;
+  financialProgress: number;
+}
+
+// --- TASKS (Team) ---
+
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  checklist?: ChecklistItem[];
+  project: string;
+  assignee: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate: string;
+  progress: number;
+  createdAt: string;
+}
+
+// --- SITE REPORT ---
+
+export interface SiteReport {
+  id: string;
+  date: string;
+  author: string;
+  rawNotes: string;
+  summary: string;
+  issues: string[];
+  weather: string;
+}
+
+// --- TEAM ---
+
+export type Role = 'ADMIN' | 'ENGINEER' | 'ARCHITECT' | 'FOREMAN' | 'WORKER' | 'SUBCONTRACTOR' | 'CLIENT';
+export type MemberStatus = 'ACTIVE' | 'INVITED' | 'INACTIVE';
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  status: MemberStatus;
+  assignedWorks: string[];
+  joinedAt: string;
+  lastActive?: string;
+  phone?: string;
+}
+
+// --- MEASUREMENTS ---
+
+export type MeasurementStatus = 'DRAFT' | 'REVIEW' | 'APPROVED' | 'INVOICED';
+
+export interface MeasurementItem {
+  budgetItemId: string;
+  description: string;
+  unit: string;
+  unitPrice: number;
+  budgetQuantity: number;
+  previousQuantity: number;
+  currentQuantity: number;
+  totalQuantity: number;
+  currentValue: number;
+  totalValue: number;
+  executionPercent: number;
+}
+
+export interface Measurement {
+  id: string;
+  workId: string;
+  reference: string;
+  date: string;
+  periodStart: string;
+  periodEnd: string;
+  status: MeasurementStatus;
+  items: Record<string, MeasurementItem>;
+  totalCurrentValue: number;
+  totalAccumulatedValue: number;
+  companyId?: string;
+}
+
+// --- FINANCIAL ---
+
+export type CostType = 'MATERIAL' | 'LABOR' | 'EQUIPMENT' | 'SUBCONTRACT' | 'OTHER';
 
 export interface FinancialTransaction {
   id: string;
   date: string;
-  dueDate: string;
+  dueDate?: string;
   description: string;
-  entity: string; // Client or Supplier
+  entity: string;
   amount: number;
   type: 'INCOME' | 'EXPENSE';
   status: 'PAID' | 'PENDING' | 'OVERDUE';
-  workId?: string; // Optional link to project
-  workName?: string; // Denormalized for list view
-  category: string;
+  category?: string;
+  workId?: string;
+  workName?: string;
 }
 
 export interface CashFlowData {
@@ -40,214 +249,6 @@ export interface CashFlowData {
   balance: number;
 }
 
-// --- APPROVALS ---
-
-export type ApprovalType = 'BUDGET' | 'MEASUREMENT' | 'RDO' | 'INVOICE' | 'PAYMENT';
-export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ON_HOLD';
-export type ApprovalPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-
-export interface ApprovalHistory {
-  id: string;
-  action: 'CREATED' | 'APPROVED' | 'REJECTED' | 'ON_HOLD' | 'COMMENT';
-  user: string;
-  date: string;
-  note?: string;
-}
-
-export interface ApprovalRequest {
-  id: string;
-  type: ApprovalType;
-  reference: string; // e.g., "Orçamento #23"
-  description: string;
-  workId: string;
-  workName: string;
-  requester: string;
-  requesterRole: string;
-  requestedAt: string;
-  amount?: number; // Optional financial value
-  status: ApprovalStatus;
-  priority: ApprovalPriority;
-  
-  // Rules Engine
-  complianceStatus: 'OK' | 'BLOCKED'; // If BLOCKED, cannot approve
-  complianceIssues?: string[];
-  
-  history: ApprovalHistory[];
-}
-
-// --- TEAM & COLLABORATORS ---
-
-export type Role = 'ADMIN' | 'ENGINEER' | 'ARCHITECT' | 'FOREMAN' | 'WORKER' | 'SUBCONTRACTOR' | 'CLIENT';
-export type MemberStatus = 'ACTIVE' | 'INVITED' | 'INACTIVE';
-
-export interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  role: Role;
-  status: MemberStatus;
-  avatarUrl?: string; // Initials if null
-  assignedWorks: string[]; // Work IDs linked to this user
-  joinedAt: string;
-  lastActive?: string;
-}
-
-// --- ORÇAMENTAÇÃO AVANÇADA (Budgeting) ---
-
-export type BudgetStatus = 'DRAFT' | 'REVIEW' | 'APPROVED' | 'EXECUTION' | 'CLOSED';
-export type BudgetItemType = 'MATERIAL' | 'LABOR' | 'EQUIPMENT' | 'SUBCONTRACT';
-
-export interface BudgetItem {
-  id: string;
-  code: string;
-  description: string;
-  unit: string;
-  quantity: number;
-  unitCost: number; // Cost to company
-  marginPercent: number; // Desired margin %
-  
-  // Calculated Fields (Read-only derivation)
-  totalCost: number; 
-  unitPrice: number; // Sale price
-  totalPrice: number; 
-  
-  type: BudgetItemType;
-  supplier?: string;
-  notes?: string;
-}
-
-export interface BudgetSubChapter {
-  id: string;
-  name: string;
-  items: BudgetItem[];
-  
-  // Rollups
-  totalCost: number;
-  totalPrice: number;
-}
-
-export interface BudgetChapter {
-  id: string;
-  name: string;
-  items: BudgetItem[]; // Direct items in chapter
-  subChapters: BudgetSubChapter[];
-  
-  // Rollups
-  totalCost: number;
-  totalPrice: number;
-}
-
-export interface Budget {
-  id: string;
-  reference: string;
-  title: string;
-  client: string;
-  projectLocation: string; // Acts as Project Name
-  version: number;
-  status: BudgetStatus;
-  date: string;
-  validityDate?: string;
-  
-  chapters: BudgetChapter[];
-  
-  // Global KPIs
-  totalCost: number;
-  totalPrice: number; // Sales value w/o Tax
-  totalMargin: number; // Cash margin
-  marginPercent: number; // % margin
-  totalTax: number; // IVA
-}
-
-// --- GESTÃO DE OBRA E CRONOGRAMA (Work & Schedule) ---
-
-export type WorkStatus = 'CREATED' | 'PLANNING' | 'EXECUTION' | 'SUSPENDED' | 'COMPLETED' | 'CLOSED';
-
-export interface ScheduleTask {
-  id: string;
-  name: string;
-  budugetRefId: string; // Link to SubChapter or Item ID
-  budgetRefType: 'SUBCHAPTER' | 'ITEM';
-  
-  startDate: string;
-  endDate: string;
-  durationDays: number;
-  progress: number; // 0-100
-  
-  status: 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'DELAYED';
-  weight: number; // Financial weight for KPI calculation
-  totalValue: number; // Value from budget
-}
-
-export interface SchedulePhase {
-  id: string;
-  name: string;
-  budgetChapterId: string; // Link to BudgetChapter
-  tasks: ScheduleTask[];
-  isExpanded?: boolean;
-}
-
-export interface Work {
-  id: string;
-  budgetId: string; // Origin Budget
-  budgetTitle: string; // Denormalized for display
-  title: string;
-  client: string;
-  location: string;
-  
-  status: WorkStatus;
-  startDate: string;
-  expectedEndDate: string;
-  
-  schedule: SchedulePhase[];
-  
-  // KPIs
-  totalBudget: number;
-  executedValue: number; // Calculated from progress
-  physicalProgress: number; // Weighted %
-  financialProgress: number; // Actually paid (stub)
-}
-
-// --- MEDIÇÕES E AUTOS (Measurements) ---
-
-export type MeasurementStatus = 'DRAFT' | 'REVIEW' | 'APPROVED' | 'INVOICED';
-
-export interface MeasurementItem {
-  budgetItemId: string;
-  description: string; // Snapshot
-  unit: string;
-  unitPrice: number; // Snapshot from budget
-  
-  budgetQuantity: number;
-  previousQuantity: number; // Cumulative from previous approved measurements
-  currentQuantity: number; // The value being measured now
-  
-  // Calculated
-  totalQuantity: number; // Prev + Current
-  currentValue: number; // Current * UnitPrice
-  totalValue: number; // Total * UnitPrice
-  executionPercent: number;
-}
-
-export interface Measurement {
-  id: string;
-  workId: string;
-  reference: string; // e.g., "Auto #1"
-  date: string;
-  periodStart: string;
-  periodEnd: string;
-  status: MeasurementStatus;
-  
-  items: Record<string, MeasurementItem>; // Keyed by budgetItemId for O(1) access
-  
-  totalCurrentValue: number;
-  totalAccumulatedValue: number;
-}
-
-// --- CUSTOS REAIS (Real Costs) ---
-
-export type CostType = 'MATERIAL' | 'LABOR' | 'EQUIPMENT' | 'SUBCONTRACT' | 'OTHER';
-
 export interface RealCost {
   id: string;
   workId: string;
@@ -255,81 +256,20 @@ export interface RealCost {
   description: string;
   amount: number;
   type: CostType;
-  budgetItemId?: string; // Link to specific item
-  budgetChapterId?: string; // Link to chapter
   supplier?: string;
-  documentRef?: string; // Invoice number e.g. "FAT-2023/001"
+  documentRef?: string;
+  budgetChapterId?: string;
   notes?: string;
 }
-
-// --- LIVRO DE OBRAS & RDO (Site Log) ---
-
-export type RDOStatus = 'DRAFT' | 'SUBMITTED' | 'VALIDATED' | 'RECTIFIED';
-export type WeatherCondition = 'SUNNY' | 'CLOUDY' | 'RAIN' | 'STORM';
-
-export interface RDOResource {
-  id: string;
-  type: CostType;
-  description: string; // e.g. "Pedreiro 1ª", "Camião Grue"
-  quantity: number;
-  hours?: number;
-  costEstimate?: number; // Stub for auto-cost generation
-}
-
-export interface RDOExecution {
-  id: string;
-  scheduleTaskId: string; // Link to ScheduleTask
-  taskName: string; // Snapshot
-  percentageIncrement: number; // How much progress was made today (e.g. +5%)
-  notes: string;
-}
-
-export interface RDOOccurrence {
-  id: string;
-  type: 'DELAY' | 'ACCIDENT' | 'VISIT' | 'NON_COMPLIANCE' | 'OTHER';
-  description: string;
-  impactLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  critical: boolean; // Triggers compliance module
-}
-
-export interface RDO {
-  id: string;
-  workId: string;
-  date: string;
-  number: number; // Sequential number
-  status: RDOStatus;
-  
-  // General Info
-  weatherMorning: WeatherCondition;
-  weatherAfternoon: WeatherCondition;
-  responsible: string;
-  
-  // Sections
-  resources: RDOResource[];
-  execution: RDOExecution[];
-  occurrences: RDOOccurrence[];
-  
-  // Audit & Meta
-  createdAt: string;
-  submittedAt?: string;
-  submittedBy?: string;
-  observations?: string;
-  
-  // Integration Flags (Visual feedback)
-  scheduleUpdated: boolean;
-  costsGenerated: boolean;
-}
-
-// --- EXECUÇÃO FINANCEIRA (Financial Execution) ---
 
 export interface FinancialItemSnapshot {
   id: string;
   description: string;
-  budgetTotal: number; // Baseline (Price)
-  executedPercent: number; // From Schedule
-  executedValue: number; // budgetTotal * executedPercent
-  actualCost: number; // Real cost incurred (Invoices/Timesheets)
-  deviation: number; // executedValue - actualCost (Profit/Loss on execution)
+  budgetTotal: number;
+  executedPercent: number;
+  executedValue: number;
+  actualCost: number;
+  deviation: number;
   status: 'ON_TRACK' | 'OVER_BUDGET' | 'UNDER_BUDGET';
 }
 
@@ -347,103 +287,122 @@ export interface FinancialChapterSnapshot {
 export interface FinancialExecution {
   workId: string;
   totalBudget: number;
-  totalExecutedValue: number; // Revenue Recognized
-  totalActualCost: number; // Cost Incurred
-  grossMargin: number; // Executed Value - Actual Cost
+  totalExecutedValue: number;
+  totalActualCost: number;
+  grossMargin: number;
   grossMarginPercent: number;
   chapters: FinancialChapterSnapshot[];
 }
 
-// --- FIM OBRA ---
-
-export interface SiteReport {
-  id: string;
-  date: string;
-  author: string;
-  rawNotes: string;
-  summary: string;
-  issues: string[];
-  weather: string;
-}
-
-// --- CONFORMIDADE (Compliance) ---
+// --- COMPLIANCE ---
 
 export type ComplianceType = 'LEGAL' | 'TECHNICAL' | 'CONTRACTUAL' | 'FINANCIAL';
 export type ComplianceStatus = 'PENDING' | 'IN_REVIEW' | 'COMPLIANT' | 'NON_COMPLIANT' | 'WAIVED';
-export type ComplianceSource = 'LAW' | 'CONTRACT' | 'INTERNAL_POLICY' | 'ISO_STANDARD';
-export type ComplianceModule = 'SITE' | 'FINANCIAL' | 'MEASUREMENT' | 'BUDGET';
 
 export interface AuditLog {
   id: string;
   date: string;
   user: string;
   action: string;
-  previousValue?: string;
-  newValue?: string;
+  previousValue?: any;
+  newValue?: any;
   reason?: string;
 }
 
 export interface ComplianceItem {
   id: string;
   workId: string;
-  requirement: string; // The rule description
+  requirement: string;
   type: ComplianceType;
-  source: ComplianceSource;
-  
-  // Linkage
-  relatedModule: ComplianceModule;
-  relatedEntityId?: string; // E.g., Measurement ID, Task ID
-  
-  // Status
+  source: string;
+  relatedModule?: string;
   status: ComplianceStatus;
-  critical: boolean; // If true, blocks related actions
-  
-  // Evidence
-  evidence?: string; // Text note or link reference
+  critical: boolean;
   lastUpdated: string;
   responsible: string;
-  
-  // Audit
   auditTrail: AuditLog[];
+  evidence?: string;
+  companyId?: string;
 }
 
-// Deprecated simplified interface (kept for backward compat if any, but superseded by ComplianceItem)
-export interface ComplianceItemSimple {
+// --- RDO ---
+
+export type RDOStatus = 'DRAFT' | 'SUBMITTED' | 'VALIDATED' | 'RECTIFIED';
+export type WeatherCondition = 'SUNNY' | 'CLOUDY' | 'RAIN' | 'STORM';
+
+export interface RDOResource {
   id: string;
-  category: string;
-  task: string;
-  status: 'PENDING' | 'COMPLETED' | 'EXPIRED';
-  dueDate: string;
+  type: 'LABOR' | 'EQUIPMENT' | 'MATERIAL' | 'SUBCONTRACT';
+  description: string;
+  quantity: number;
 }
 
-export interface Invoice {
+export interface RDOExecution {
   id: string;
-  number: string;
-  client: string;
-  amount: number;
-  status: 'DRAFT' | 'SENT' | 'PAID';
+  scheduleTaskId: string;
+  taskName: string;
+  percentageIncrement: number;
+  notes?: string;
+}
+
+export interface RDOOccurrence {
+  id: string;
+  type: 'DELAY' | 'ACCIDENT' | 'NON_COMPLIANCE' | 'VISIT' | 'OTHER';
+  description: string;
+  impactLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  critical: boolean;
+}
+
+export interface RDO {
+  id: string;
+  workId: string;
   date: string;
-}
-
-export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
-export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
-
-export interface ChecklistItem {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-
-export interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  checklist?: ChecklistItem[];
-  project: string;
-  assignee: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  dueDate: string;
-  progress: number;
+  number: number;
+  status: RDOStatus;
+  weatherMorning: WeatherCondition;
+  weatherAfternoon: WeatherCondition;
+  responsible: string;
+  resources: RDOResource[];
+  execution: RDOExecution[];
+  occurrences: RDOOccurrence[];
+  observations?: string;
   createdAt: string;
+  submittedAt?: string;
+  submittedBy?: string;
+  scheduleUpdated: boolean;
+  costsGenerated: boolean;
+  companyId?: string;
+}
+
+// --- APPROVALS ---
+
+export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ON_HOLD';
+
+export interface ApprovalHistory {
+  id: string;
+  action: string;
+  user: string;
+  date: string;
+  note?: string;
+}
+
+export interface ApprovalRequest {
+  id: string;
+  type: 'BUDGET' | 'MEASUREMENT' | 'RDO' | 'INVOICE';
+  reference: string;
+  description: string;
+  workId: string;
+  workName: string;
+  requester: string;
+  requesterRole: string;
+  requestedAt: string;
+  amount?: number;
+  status: ApprovalStatus;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  complianceStatus: 'OK' | 'BLOCKED';
+  complianceIssues?: string[];
+  history: ApprovalHistory[];
+  companyId?: string;
+  collectionName?: string;
+  entityId?: string;
 }

@@ -35,13 +35,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, isMobile
     { id: View.SCHEDULE, label: 'Cronograma', icon: Calendar },
     { id: View.TEAM, label: 'Colaboradores', icon: Users },
     { id: View.COMPLIANCE, label: 'Conformidade', icon: FileCheck },
-    { id: View.APPROVALS, label: 'Gestão de Aprovações', icon: CheckSquare },
     { id: View.FINANCIAL, label: 'Financeiro', icon: Wallet },
     { id: View.REPORTS, label: 'Relatórios', icon: FileText },
     { id: View.PLANS, label: 'Nossos Planos', icon: Settings },
     { id: View.PRICES, label: 'Base de Preços', icon: Database },
     { id: View.ARTICLES, label: 'Artigos de Trabalho', icon: Briefcase },
     { id: View.AUTOMATION, label: 'Automação & Inteligência', icon: Zap },
+    { id: View.SUPPORT, label: 'Suporte', icon: LifeBuoy },
   ];
 
   return (
@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, isMobile
                 className={`
                   w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium
                   ${isActive 
-                    ? 'bg-slate-900 text-white shadow-sm' 
+                    ? 'bg-[#34669A] text-white shadow-sm' 
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
                 `}
               >
@@ -118,11 +118,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, isMobile
             </div>
           </div>
           
-          <button className="w-full flex items-center space-x-3 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors text-sm font-medium">
-            <LifeBuoy size={18} />
-            <span>Suporte</span>
-          </button>
-
           <button className="w-full flex items-center space-x-3 px-3 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium">
             <LogOut size={18} />
             <span>Sair</span>

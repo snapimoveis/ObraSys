@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Logo } from './Logo';
-import { Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle, Mail } from 'lucide-react';
 
 interface LoginProps {
   onLogin: () => void;
@@ -62,16 +62,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToRegister }) =
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">E-mail</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-              </span>
+              <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input 
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="email@exemplo.com"
-                className={`w-full bg-white text-gray-900 border rounded-md p-3 pl-10 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
+                className={`w-full bg-white text-gray-900 placeholder:text-gray-400 border rounded-md p-3 pl-10 shadow-sm outline-none transition-all text-sm ${
                   errors.email 
                     ? 'border-red-500 focus:ring-1 focus:ring-red-500' 
                     : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'

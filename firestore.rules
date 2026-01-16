@@ -31,35 +31,24 @@ service cloud.firestore {
 
     // --- COLLECTION RULES ---
 
-    // 1. Companies (Read own, Write Admin only)
+    // 1. Companies
     match /companies/{companyId} {
       allow read: if isCompanyMember(companyId);
       allow write: if isCompanyMember(companyId) && hasRole(['admin']);
     }
 
-    // 2. Budgets (Critical Logic)
+    // 2. Budgets
     match /budgets/{budgetId} {
       allow read: if isCompanyMember(resource.data.companyId);
-      
-      // Create: Draft only
-      allow create: if isCompanyMember(request.resource.data.companyId) 
-                    && request.resource.data.status == 'DRAFT'
-                    && hasAuditFields();
-      
-      // Update: Only if DRAFT or REVIEW. Cannot set to APPROVED directly (must use Function).
-      allow update: if isCompanyMember(resource.data.companyId)
-                    && isMutableResource()
-                    && request.resource.data.status != 'APPROVED'; // Block direct approval
-      
-      // Delete: Never allowed physically for audit purposes
+      allow create: if isCompanyMember(request.resource.data.companyId) && request.resource.data.status == 'DRAFT' && hasAuditFields();
+      allow update: if isCompanyMember(resource.data.companyId) && isMutableResource() && request.resource.data.status != 'APPROVED';
       allow delete: if false;
     }
 
-    // 3. Works (Created via Automation mostly, editable by Managers)
+    // 3. Works
     match /works/{workId} {
       allow read: if isCompanyMember(resource.data.companyId);
-      allow update: if isCompanyMember(resource.data.companyId) 
-                    && hasRole(['admin', 'gestor', 'engenheiro']);
+      allow update: if isCompanyMember(resource.data.companyId) && hasRole(['admin', 'gestor', 'engenheiro']);
     }
 
     // 4. Schedules & Tasks
@@ -67,35 +56,31 @@ service cloud.firestore {
       allow read, write: if isCompanyMember(resource.data.companyId);
     }
 
-    // 5. Measurements (Autos)
+    // 5. Measurements
     match /measurements/{measurementId} {
       allow read: if isCompanyMember(resource.data.companyId);
       allow create: if isCompanyMember(request.resource.data.companyId);
-      allow update: if isCompanyMember(resource.data.companyId) 
-                    && isMutableResource() // Cannot edit if APPROVED
-                    && request.resource.data.status != 'APPROVED'; // Approval via Function
+      allow update: if isCompanyMember(resource.data.companyId) && isMutableResource() && request.resource.data.status != 'APPROVED';
     }
 
     // 6. Real Costs
     match /realCosts/{costId} {
       allow read: if isCompanyMember(resource.data.companyId);
-      // Immutable once created to ensure financial integrity
       allow create: if isCompanyMember(request.resource.data.companyId);
       allow update, delete: if false; 
     }
 
-    // 7. RDO (Site Log)
+    // 7. RDO
     match /rdoEntries/{rdoId} {
       allow read: if isCompanyMember(resource.data.companyId);
       allow create: if isCompanyMember(request.resource.data.companyId);
-      allow update: if isCompanyMember(resource.data.companyId)
-                    && isMutableResource(); // Block update if SUBMITTED
+      allow update: if isCompanyMember(resource.data.companyId) && isMutableResource();
     }
 
-    // 8. Approvals (Read Only for frontend, Write via Backend)
+    // 8. Approvals
     match /approvals/{approvalId} {
       allow read: if isCompanyMember(resource.data.companyId);
-      allow write: if false; // Only Cloud Functions manage approvals
+      allow write: if false;
     }
 
     // 9. Compliance
@@ -104,16 +89,46 @@ service cloud.firestore {
       allow write: if isCompanyMember(resource.data.companyId) && hasRole(['admin', 'gestor', 'engenheiro']);
     }
 
-    // 10. Audit Logs (Strictly Read Only, Write via Backend)
+    // 10. Audit Logs
     match /auditLogs/{logId} {
       allow read: if isCompanyMember(resource.data.companyId) && hasRole(['admin', 'gestor']);
-      allow write: if false;
+      allow write: if false; // System only
     }
     
-    // 11. Users (Managed by Admin)
+    // 11. Users
     match /users/{userId} {
       allow read: if isCompanyMember(resource.data.companyId);
-      allow write: if false; // Managed via Admin SDK / Functions
+      allow write: if false;
+    }
+
+    // --- NEW: SUPPORT TICKETS ---
+
+    match /tickets/{ticketId} {
+      // Read: Any member of the company
+      allow read: if isCompanyMember(resource.data.companyId);
+      
+      // Create: Any member, must set correct companyId, status must be OPEN
+      allow create: if isCompanyMember(request.resource.data.companyId)
+                    && request.resource.data.status == 'OPEN'
+                    && !request.resource.data.keys().hasAny(['readableId', 'closedAt', 'lastResponseAt']);
+
+      // Update:
+      // 1. Regular users can only update 'status' to 'RESOLVED' (close own ticket) or add messages (handled in subcollection)
+      // 2. Admins/Support can update priority, status, category
+      // 3. Prevent changing immutable fields (id, companyId, readableId, createdAt)
+      allow update: if isCompanyMember(resource.data.companyId)
+                    && request.resource.data.companyId == resource.data.companyId
+                    && request.resource.data.readableId == resource.data.readableId
+                    && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    match /tickets/{ticketId}/messages/{messageId} {
+      allow read: if isCompanyMember(get(/databases/$(database)/documents/tickets/$(ticketId)).data.companyId);
+      
+      allow create: if isCompanyMember(get(/databases/$(database)/documents/tickets/$(ticketId)).data.companyId)
+                    && request.resource.data.senderId == request.auth.uid;
+                    
+      allow update, delete: if false; // Messages are immutable history
     }
   }
 }

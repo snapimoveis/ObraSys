@@ -7,7 +7,7 @@ import SiteManagement from './components/SiteManagement';
 import Schedule from './components/Schedule';
 import Team from './components/Team';
 import Compliance from './components/Compliance';
-import Approvals from './components/Approvals'; // Imported
+import Approvals from './components/Approvals';
 import Financial from './components/Financial';
 import Reports from './components/Reports';
 import Prices from './components/Prices';
@@ -16,6 +16,7 @@ import Plans from './components/Plans';
 import CompanyManagement from './components/CompanyManagement';
 import ProfileModal from './components/ProfileModal';
 import TaskManagement from './components/TaskManagement';
+import Support from './components/Support';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { Menu, Bell, Settings, Search, ChevronLeft, User, Building2, LogOut } from 'lucide-react';
@@ -81,6 +82,8 @@ const App: React.FC = () => {
         return <Articles />;
       case View.COMPANY_SETTINGS:
         return <CompanyManagement />;
+      case View.SUPPORT:
+        return <Support />;
       case View.INVOICING:
         return (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
@@ -129,6 +132,7 @@ const App: React.FC = () => {
                <span className="text-slate-800 font-medium">
                  {currentView === View.DASHBOARD ? 'Painel de Controlo' : 
                   currentView === View.COMPANY_SETTINGS ? 'Gestão da Empresa' :
+                  currentView === View.SUPPORT ? 'Centro de Suporte' :
                   'Área de Trabalho'}
                </span>
              </div>

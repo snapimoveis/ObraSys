@@ -113,6 +113,7 @@ const BudgetEditor: React.FC<BudgetEditorProps> = ({ budget: initialBudget, onSa
        id: Date.now().toString(),
        name: 'Novo Subcapítulo',
        items: [],
+       subChapters: [],
        totalCost: 0,
        totalPrice: 0
     };
