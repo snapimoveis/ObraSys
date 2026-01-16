@@ -1,25 +1,24 @@
+
 import { useState, useEffect } from 'react';
 import { TeamMember } from '../types';
-import { db, getCurrentCompanyId } from '../services/firebase';
+import { db } from '../services/firebase';
+import { useSession } from '../contexts/SessionContext';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc, QuerySnapshot } from 'firebase/firestore';
 
 export const useTeam = () => {
+  const { companyId } = useSession();
   const [members, setMembers] = useState<TeamMember[]>([]);
-  const companyId = getCurrentCompanyId();
 
   useEffect(() => {
     if (!companyId) return;
 
     const q = query(collection(db, 'users'), where('companyId', '==', companyId));
-    
     const unsubscribe = onSnapshot(q, (querySnapshot: QuerySnapshot) => {
       const teamData: TeamMember[] = [];
       querySnapshot.forEach((doc) => {
         teamData.push({ id: doc.id, ...doc.data() } as TeamMember);
       });
       setMembers(teamData);
-    }, (error) => {
-      console.error("Error fetching team:", error);
     });
 
     return () => unsubscribe();
@@ -28,7 +27,6 @@ export const useTeam = () => {
   const addMember = async (data: Partial<TeamMember>) => {
     if (!companyId) return;
     try {
-      // Typically invites create a temp doc, here we simulate adding a user
       await addDoc(collection(db, 'users'), {
         ...data,
         companyId,
@@ -58,16 +56,19 @@ export const useTeam = () => {
     }
   };
 
-  const resendInvitation = (id: string) => {
-    console.log(`Resending invite to ${id}`);
-    alert("Convite reenviado com sucesso!");
+  /**
+   * Fix: Added resendInvitation function to meet the requirements of components/Team.tsx
+   */
+  const resendInvitation = async (id: string) => {
+    try {
+      await updateDoc(doc(db, 'users', id), {
+        joinedAt: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Error resending invitation:", e);
+    }
   };
 
-  return {
-    members,
-    addMember,
-    updateMember,
-    removeMember,
-    resendInvitation
-  };
+  // Fix: Returned resendInvitation
+  return { members, addMember, updateMember, removeMember, resendInvitation };
 };

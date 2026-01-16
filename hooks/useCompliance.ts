@@ -1,14 +1,15 @@
+
 import { useState, useMemo, useEffect } from 'react';
 import { ComplianceItem, ComplianceStatus, AuditLog } from '../types';
-import { db, getCurrentCompanyId } from '../services/firebase';
+import { db } from '../services/firebase';
+import { useSession } from '../contexts/SessionContext';
 import { collection, query, where, onSnapshot, updateDoc, doc, QuerySnapshot } from 'firebase/firestore';
 
 export const useCompliance = (workId: string | undefined) => {
+  const { companyId, userId } = useSession();
   const [items, setItems] = useState<ComplianceItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const companyId = getCurrentCompanyId();
 
-  // Load items from Firestore
   useEffect(() => {
     if (!workId || !companyId) {
       setItems([]);
@@ -26,34 +27,36 @@ export const useCompliance = (workId: string | undefined) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ComplianceItem));
       setItems(data);
       setLoading(false);
+    }, (err) => {
+      console.error("Firestore compliance fetch error:", err);
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, [workId, companyId]);
 
-  const updateStatus = async (itemId: string, newStatus: ComplianceStatus, user: string, reason?: string, evidence?: string) => {
+  const updateStatus = async (itemId: string, newStatus: ComplianceStatus, userName: string, reason?: string, evidence?: string) => {
+    if (!companyId) return;
     const item = items.find(i => i.id === itemId);
     if (!item) return;
 
     const log: AuditLog = {
         id: Date.now().toString(),
         date: new Date().toISOString(),
-        user,
+        user: userName || 'Utilizador',
         action: 'UPDATE_STATUS',
         previousValue: item.status,
         newValue: newStatus,
         reason: reason || 'Atualização manual'
     };
 
-    const updates: Partial<ComplianceItem> = {
+    const updates: any = {
         status: newStatus,
         lastUpdated: new Date().toISOString(),
         auditTrail: [log, ...item.auditTrail]
     };
 
-    if (evidence !== undefined) {
-        updates.evidence = evidence;
-    }
+    if (evidence !== undefined) updates.evidence = evidence;
 
     try {
         await updateDoc(doc(db, 'complianceItems', itemId), updates);
@@ -62,24 +65,30 @@ export const useCompliance = (workId: string | undefined) => {
     }
   };
 
-  const addEvidence = async (itemId: string, note: string, user: string) => {
+  /**
+   * Fix: Added addEvidence function to meet the requirements of components/Compliance.tsx
+   */
+  const addEvidence = async (itemId: string, evidence: string, userName: string) => {
+    if (!companyId) return;
     const item = items.find(i => i.id === itemId);
     if (!item) return;
 
     const log: AuditLog = {
         id: Date.now().toString(),
         date: new Date().toISOString(),
-        user,
+        user: userName || 'Utilizador',
         action: 'ADD_EVIDENCE',
-        newValue: note,
+        newValue: evidence,
+    };
+
+    const updates: any = {
+        evidence: evidence,
+        lastUpdated: new Date().toISOString(),
+        auditTrail: [log, ...item.auditTrail]
     };
 
     try {
-        await updateDoc(doc(db, 'complianceItems', itemId), {
-            evidence: note,
-            lastUpdated: new Date().toISOString(),
-            auditTrail: [log, ...item.auditTrail]
-        });
+        await updateDoc(doc(db, 'complianceItems', itemId), updates);
     } catch (e) {
         console.error("Error adding evidence:", e);
     }
@@ -95,11 +104,6 @@ export const useCompliance = (workId: string | undefined) => {
     return { total, compliant, pending, criticalIssues, percentage };
   }, [items]);
 
-  return {
-    items,
-    loading,
-    stats,
-    updateStatus,
-    addEvidence
-  };
+  // Fix: Returned addEvidence
+  return { items, loading, stats, updateStatus, addEvidence };
 };

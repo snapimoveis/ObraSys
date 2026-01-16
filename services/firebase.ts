@@ -13,11 +13,13 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Helper para obter o ID da empresa do utilizador atual
-// Assumimos que o Login guardou isto no localStorage para evitar chamadas repetidas
+/**
+ * @deprecated Utilize o useSession() hook para obter o companyId de forma segura e reativa.
+ */
 export const getCurrentCompanyId = () => {
   return localStorage.getItem('obrasys_company_id');
 };

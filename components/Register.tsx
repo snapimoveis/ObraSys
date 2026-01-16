@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Logo } from './Logo';
 import { Eye, EyeOff, ArrowLeft, UserPlus, AlertCircle, Loader2 } from 'lucide-react';
 import { auth, db } from '../services/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 import { doc, setDoc, collection } from 'firebase/firestore';
 
 interface RegisterProps {
@@ -11,320 +11,79 @@ interface RegisterProps {
 }
 
 export const Register: React.FC<RegisterProps> = ({ onRegister, onNavigateToLogin }) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    companyName: '',
-    clientType: 'Empresa',
-    nif: '',
-    password: '',
-    confirmPassword: '',
-    terms: false
+    name: '', email: '', companyName: '', password: '', confirmPassword: '', terms: false
   });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!formData.name.trim()) newErrors.name = 'O nome é obrigatório.';
-    
-    if (!formData.email) {
-      newErrors.email = 'O e-mail é obrigatório.';
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Formato de e-mail inválido.';
-    }
-
-    if (!formData.phone) newErrors.phone = 'O telefone é obrigatório.';
-    if (!formData.companyName) newErrors.companyName = 'O nome da empresa é obrigatório.';
-
-    if (!formData.password) {
-      newErrors.password = 'A palavra-passe é obrigatória.';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'A palavra-passe deve ter no mínimo 8 caracteres.';
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'A confirmação da palavra-passe é obrigatória.';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'As palavras-passe não coincidem.';
-    }
-
-    if (!formData.terms) {
-      newErrors.terms = 'Deve aceitar os Termos de Serviço e a Política de Privacidade.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!formData.terms) { setError('Aceite os termos para continuar.'); return; }
+    if (formData.password !== formData.confirmPassword) { setError('Senhas não coincidem.'); return; }
 
     setLoading(true);
-    setErrors({});
+    setError(null);
+    let authUser = null;
 
     try {
-      // 1. Create Auth User
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      const user = userCredential.user;
+      authUser = userCredential.user;
 
-      // 2. Create Company Document (generate a random ID or let Firestore do it)
       const companyRef = doc(collection(db, 'companies'));
       const companyId = companyRef.id;
 
       await setDoc(companyRef, {
-        name: formData.companyName,
-        nif: formData.nif,
-        type: formData.clientType,
-        createdAt: new Date().toISOString(),
-        ownerId: user.uid,
-        email: formData.email,
-        phone: formData.phone
+        name: formData.companyName, createdAt: new Date().toISOString(), ownerId: authUser.uid, email: formData.email
       });
 
-      // 3. Create User Profile with Company Association
-      await setDoc(doc(db, 'users', user.uid), {
-        email: formData.email,
-        name: formData.name,
-        phone: formData.phone,
-        companyId: companyId,
-        role: 'admin',
-        createdAt: new Date().toISOString(),
-        status: 'ACTIVE'
+      await setDoc(doc(db, 'users', authUser.uid), {
+        email: formData.email, name: formData.name, companyId, role: 'admin', createdAt: new Date().toISOString(), status: 'ACTIVE'
       });
-
-      // 4. Save session context
-      localStorage.setItem('obrasys_company_id', companyId);
 
       onRegister();
-
-    } catch (error: any) {
-      console.error("Register Error:", error);
-      let msg = "Erro ao criar conta.";
-      if (error.code === 'auth/email-already-in-use') msg = "Este e-mail já está registado.";
-      setErrors({ form: msg });
+    } catch (err: any) {
+      console.error(err);
+      if (authUser) await deleteUser(authUser);
+      setError('Erro ao criar conta. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
-    
-    setFormData(prev => ({ ...prev, [name]: val }));
-    
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans py-10">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-2xl border border-slate-100">
-        <div className="flex justify-center mb-6">
-          <Logo className="h-14 w-auto text-[#00609C]" />
-        </div>
-        
+        <div className="flex justify-center mb-6"><Logo className="h-14 w-auto text-[#00609C]" /></div>
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-[#00609C]">Criar Conta</h2>
-          <p className="text-slate-500 text-sm mt-2">Registe-se para começar a gerir as suas obras</p>
+          <h2 className="text-2xl font-bold text-[#00609C]">Criar Conta Obra Sys</h2>
         </div>
 
-        {errors.form && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm mb-4 flex items-center gap-2">
-            <AlertCircle size={16} />
-            {errors.form}
+        {error && (
+          <div className="p-4 rounded-lg text-sm mb-6 flex items-start gap-3 border bg-red-50 text-red-600 border-red-100">
+            <AlertCircle size={18} />
+            <p>{error}</p>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome e Apelido *</label>
-              <input 
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="João Silva"
-                className={`w-full bg-white text-gray-900 border rounded-md p-2.5 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
-                  errors.name ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
-                }`}
-              />
-              {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">E-mail *</label>
-              <input 
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="snapimoveis@gmail.com"
-                className={`w-full bg-white text-gray-900 border rounded-md p-2.5 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
-                  errors.email ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
-                }`}
-              />
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
-            </div>
+            <input type="text" placeholder="Nome Completo" className="border rounded-lg p-2.5 text-sm" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+            <input type="email" placeholder="Email" className="border rounded-lg p-2.5 text-sm" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
           </div>
-
+          <input type="text" placeholder="Nome da Empresa" className="w-full border rounded-lg p-2.5 text-sm" value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} required />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Telefone *</label>
-              <input 
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="+351 912 345 678"
-                className={`w-full bg-white text-gray-900 border rounded-md p-2.5 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
-                  errors.phone ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
-                }`}
-              />
-              {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome da Empresa *</label>
-              <input 
-                type="text"
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleChange}
-                placeholder="Construções Silva, Lda."
-                className={`w-full bg-white text-gray-900 border rounded-md p-2.5 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
-                  errors.companyName ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
-                }`}
-              />
-              {errors.companyName && <p className="text-xs text-red-500 mt-1">{errors.companyName}</p>}
-            </div>
+            <input type="password" placeholder="Palavra-passe" className="border rounded-lg p-2.5 text-sm" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required />
+            <input type="password" placeholder="Confirmar" className="border rounded-lg p-2.5 text-sm" value={formData.confirmPassword} onChange={e => setFormData({...formData, confirmPassword: e.target.value})} required />
           </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tipo de Cliente *</label>
-            <select 
-              name="clientType"
-              value={formData.clientType}
-              onChange={handleChange}
-              className="w-full bg-white text-gray-900 border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all text-sm shadow-sm"
-            >
-              <option value="Empresa">Empresa</option>
-              <option value="Particular">Particular</option>
-              <option value="Subempreiteiro">Subempreiteiro</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">NIF (opcional)</label>
-            <input 
-              type="text"
-              name="nif"
-              value={formData.nif}
-              onChange={handleChange}
-              placeholder="123456789"
-              className="w-full bg-white text-gray-900 border border-gray-300 rounded-md p-2.5 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all text-sm placeholder-gray-400 shadow-sm"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Palavra-passe *</label>
-              <div className="relative">
-                <input 
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="........"
-                  className={`w-full bg-white text-gray-900 border rounded-md p-2.5 pr-10 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
-                    errors.password ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
-                  }`}
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Confirmar Palavra-passe *</label>
-              <div className="relative">
-                <input 
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirme a senha"
-                  className={`w-full bg-white text-gray-900 border rounded-md p-2.5 pr-10 outline-none transition-all text-sm placeholder-gray-400 shadow-sm ${
-                    errors.confirmPassword ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
-                  }`}
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              {errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{errors.confirmPassword}</p>}
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-start gap-3 mt-4">
-              <input 
-                type="checkbox" 
-                name="terms"
-                id="terms"
-                checked={formData.terms}
-                onChange={handleChange}
-                className="mt-1 w-4 h-4 text-[#00609C] border-gray-300 rounded focus:ring-[#00609C]"
-              />
-              <label htmlFor="terms" className="text-sm text-slate-600">
-                Aceito os <a href="#" className="text-[#00609C] hover:underline">Termos de Serviço</a> e a <a href="#" className="text-[#00609C] hover:underline">Política de Privacidade</a>
-              </label>
-            </div>
-            {errors.terms && <p className="text-xs text-red-500 mt-1 ml-7">{errors.terms}</p>}
-          </div>
-
-          <button 
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#00609C] hover:bg-[#004e80] text-white font-bold py-3 rounded-md flex items-center justify-center gap-2 transition-colors shadow-sm mt-6 disabled:opacity-50"
-          >
-            {loading ? <Loader2 className="animate-spin" /> : <UserPlus size={18} />}
-            <span>Criar Conta</span>
+          <label className="flex items-center gap-3 text-sm text-slate-600">
+            <input type="checkbox" checked={formData.terms} onChange={e => setFormData({...formData, terms: e.target.checked})} /> Aceito os Termos.
+          </label>
+          <button type="submit" disabled={loading} className="w-full bg-[#00609C] text-white font-bold py-3.5 rounded-lg flex items-center justify-center gap-2">
+            {loading ? <Loader2 className="animate-spin" /> : <><span>Criar Empresa</span></>}
           </button>
         </form>
-
-        <div className="mt-8 text-center space-y-4">
-          <p className="text-sm text-slate-500">
-            Já tem uma conta?{' '}
-            <button onClick={onNavigateToLogin} className="text-[#00609C] font-medium hover:underline">
-              Entrar
-            </button>
-          </p>
-
-          <button className="text-sm text-slate-400 hover:text-slate-600 flex items-center justify-center gap-2 w-full mt-2 transition-colors">
-            <ArrowLeft size={16} />
-            <span>Voltar ao início</span>
-          </button>
-        </div>
+        <button onClick={onNavigateToLogin} className="mt-8 text-sm text-slate-400 w-full flex items-center justify-center gap-2"><ArrowLeft size={16} />Voltar ao Login</button>
       </div>
     </div>
   );
